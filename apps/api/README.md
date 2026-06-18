@@ -61,7 +61,7 @@ curl "http://127.0.0.1:8000/sources/pr_gov_main"
 
 ### `POST /ask`
 
-Placeholder assistant endpoint until retrieval is connected.
+Placeholder assistant endpoint until retrieval is connected. It already returns the citation-first answer contract used by the web UI.
 
 Example:
 
@@ -79,3 +79,21 @@ From the repository root:
 python -m packages.ingestion.load_sources
 python -m packages.ingestion.load_sources --json
 ```
+
+## Fetch a static page
+
+Use the first static page ingestion script to fetch and normalize public HTML content:
+
+```bash
+python -m packages.ingestion.fetch_static_page https://www.pr.gov/ --pretty
+```
+
+The command returns JSON with:
+
+- `url`
+- `title`
+- `text`
+- `fetched_at`
+- `content_hash`
+- `status_code`
+- `content_length`
