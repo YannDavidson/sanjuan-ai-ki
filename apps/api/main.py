@@ -13,27 +13,21 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from packages.ingestion.load_sources import SourceRegistryError, load_sources
+from packages.shared.answer_schema import AnswerSource, AskAnswer
 from packages.shared.source_schema import Source
 
 app = FastAPI(
     title="SanJuan AI API",
     description="MVP backend for Puerto Rico's AI-native public knowledge infrastructure.",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 
 class AskRequest(BaseModel):
-    """Placeholder ask request until retrieval is connected."""
+    """Ask request for the citation-first SanJuan AI assistant."""
 
     question: str = Field(..., min_length=2, description="User question for SanJuan AI.")
     language: str | None = Field(default=None, description="Optional preferred response language, such as 'en' or 'es'.")
-
-
-class AskResponse(BaseModel):
-    """Placeholder ask response."""
-
-    answer: str
-    sources: list[dict[str, Any]] = Field(default_factory=list)
 
 
 def _load_sources_or_500() -> list[Source]:
@@ -41,6 +35,18 @@ def _load_sources_or_500() -> list[Source]:
         return load_sources()
     except SourceRegistryError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+def _source_to_answer_source(source: Source) -> AnswerSource:
+    return AnswerSource(
+        source_id=source.id,
+        source_name=source.name,
+        url=source.url,
+        category=source.category,
+        geography=source.geography,
+        language=source.language,
+        trust_level=source.trust_level,
+    )
 
 
 @app.get("/health")
@@ -86,14 +92,29 @@ def get_source(source_id: str) -> dict[str, Any]:
     return source.model_dump(mode="json")
 
 
-@app.post("/ask", response_model=AskResponse)
-def ask(request: AskRequest) -> AskResponse:
-    """Placeholder assistant endpoint.
+@app.post("/ask", response_model=AskAnswer)
+def ask(request: AskRequest) -> AskAnswer:
+    """Citation-first placeholder assistant endpoint.
 
-    Retrieval will be connected after the ingestion and citation strategy are implemented.
+    Retrieval is not connected yet. Until then, return the final response shape
+    the frontend should design around: answer, language, confidence, citations,
+    broader sources, and an optional safety note.
     """
-    _ = request
-    return AskResponse(
-        answer="SanJuan AI is not connected to retrieval yet. The source registry is live, and citation-based answers are the next step.",
-        sources=[],
+    sources = _load_sources_or_500()
+    official_sources = [source for source in sources if source.trust_level == "official"][:5]
+    language = request.language or "en"
+
+    return AskAnswer(
+        answer=(
+            "SanJuan AI is not connected to retrieval yet. The source registry is live, "
+            "and the next implementation step is citation-based retrieval over trusted Puerto Rico sources."
+        ),
+        language=language,
+        confidence="placeholder",
+        citations=[],
+        sources=[_source_to_answer_source(source) for source in official_sources],
+        safety_note=(
+            "For permits, taxes, health, legal, emergency, public benefits, police, courts, or immigration questions, "
+            "SanJuan AI will require trusted official sources before giving a direct answer."
+        ),
     )
