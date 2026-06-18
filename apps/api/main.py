@@ -139,7 +139,7 @@ def _detect_language(question: str, preferred_language: str | None) -> str:
     if preferred_language in {"en", "es"}:
         return preferred_language
 
-    spanish_markers = {"cómo", "dónde", "qué", "cuál", "puerto rico", "permiso", "salud", "impuestos"}
+    spanish_markers = {"cómo", "dónde", "qué", "cuál", "permiso", "salud", "impuestos"}
     normalized = question.lower()
     if any(marker in normalized for marker in spanish_markers):
         return "es"
