@@ -1,6 +1,6 @@
 # SanJuan AI API
 
-FastAPI backend for SanJuan AI's Puerto Rico source registry and future retrieval layer.
+FastAPI backend for SanJuan AI's Puerto Rico source registry, local ingestion pipeline, retrieval layer, and citation-first `/ask` endpoint.
 
 ## Run locally
 
@@ -61,7 +61,7 @@ curl "http://127.0.0.1:8000/sources/pr_gov_main"
 
 ### `POST /ask`
 
-Placeholder assistant endpoint until retrieval is connected. It already returns the citation-first answer contract used by the web UI.
+Citation-first assistant endpoint. The MVP uses local keyword retrieval over chunked documents and returns extractive answers from the top evidence block. It does not call an external LLM yet.
 
 Example:
 
@@ -70,6 +70,17 @@ curl -X POST "http://127.0.0.1:8000/ask" \
   -H "Content-Type: application/json" \
   -d '{"question":"How do I register a business in Puerto Rico?","language":"en"}'
 ```
+
+The response includes:
+
+- `answer`
+- `language`
+- `confidence`
+- `citations`
+- `sources`
+- `safety_note`
+
+If no chunks are available or no evidence is found, `/ask` returns a clear fallback instead of guessing.
 
 ## Validate source registry
 
@@ -166,4 +177,41 @@ python -m packages.retrieval.chunk_documents \
   --chunk-size 1200 \
   --chunk-overlap 200 \
   --pretty
+```
+
+## Search local chunks
+
+Run local keyword retrieval over chunked documents:
+
+```bash
+python -m packages.retrieval.keyword_search "business registration Puerto Rico" --pretty
+```
+
+Useful filters:
+
+```bash
+python -m packages.retrieval.keyword_search "permit" \
+  --trust-level official \
+  --language es \
+  --limit 5 \
+  --pretty
+```
+
+The search layer ranks chunks using exact phrase matches, token overlap, metadata matches, and source trust boosts. It is intentionally simple and transparent for the MVP.
+
+## End-to-end local data flow
+
+```bash
+python -m packages.ingestion.batch_ingest_sources --pretty
+python -m packages.retrieval.chunk_documents --pretty
+python -m packages.retrieval.keyword_search "business registration Puerto Rico" --pretty
+uvicorn apps.api.main:app --reload
+```
+
+Then test `/ask`:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/ask" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"business registration Puerto Rico","language":"en"}'
 ```
