@@ -21,6 +21,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <nav className="nav-links" aria-label="Main navigation">
               <Link href="/ask">Ask</Link>
               <Link href="/sources">Sources</Link>
+              <Link href="/status">Status</Link>
               <a href="https://github.com/YannDavidson/sanjuan-ai" target="_blank" rel="noreferrer">
                 GitHub
               </a>
