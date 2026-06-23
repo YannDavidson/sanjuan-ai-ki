@@ -1,0 +1,24 @@
+{
+  "document_id": "demo_business_registration",
+  "source_id": "demo_pr_business",
+  "source": {
+    "id": "demo_pr_business",
+    "name": "Demo Puerto Rico Business Registry",
+    "url": "https://example.test/puerto-rico-business-registration",
+    "category": "business_registration",
+    "geography": "puerto_rico",
+    "language": "en",
+    "trust_level": "official",
+    "source_type": "fixture",
+    "update_frequency": "static",
+    "notes": "Demo fixture for CI retrieval tests."
+  },
+  "url": "https://example.test/puerto-rico-business-registration",
+  "title": "Puerto Rico Business Registration Demo",
+  "text": "Puerto Rico business registration generally starts with choosing a legal entity, preparing basic company information, and filing with the Puerto Rico Department of State. After entity registration, many businesses also review tax, merchant, municipal, and permit requirements before operating. This is demo fixture content for SanJuan AI retrieval tests and is not official legal advice.",
+  "fetched_at": "2026-06-23T00:00:00Z",
+  "content_hash": "demo-business-registration-hash",
+  "status_code": 200,
+  "content_length": 368,
+  "error": null
+}
