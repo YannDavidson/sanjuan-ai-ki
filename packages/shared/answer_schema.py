@@ -33,6 +33,22 @@ class AnswerSource(BaseModel):
     trust_level: str
 
 
+class IngestionStatus(BaseModel):
+    """Local corpus readiness metadata returned with /ask."""
+
+    ready_for_keyword_retrieval: bool = False
+    ready_for_vector_retrieval: bool = False
+    raw_documents_count: int = 0
+    chunk_files_count: int = 0
+    chunks_count: int = 0
+    vector_files_count: int = 0
+    vectors_count: int = 0
+    warnings: list[str] = Field(default_factory=list)
+    raw_dir: str = "data/documents/raw"
+    chunks_dir: str = "data/documents/chunks"
+    vectors_dir: str = "data/documents/vectors"
+
+
 class AskAnswer(BaseModel):
     """Citation-first response contract for /ask."""
 
@@ -42,3 +58,4 @@ class AskAnswer(BaseModel):
     citations: list[Citation] = Field(default_factory=list)
     sources: list[AnswerSource] = Field(default_factory=list)
     safety_note: str | None = None
+    ingestion_status: IngestionStatus | None = None
