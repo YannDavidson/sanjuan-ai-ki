@@ -12,15 +12,16 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from packages.ingestion.corpus_status import build_corpus_status_dict
 from packages.ingestion.load_sources import SourceRegistryError, load_sources
-from packages.retrieval.keyword_search import search_chunks
-from packages.shared.answer_schema import AnswerSource, AskAnswer, Citation
+from packages.retrieval.hybrid_search import search_hybrid
+from packages.shared.answer_schema import AnswerSource, AskAnswer, Citation, IngestionStatus
 from packages.shared.source_schema import Source
 
 app = FastAPI(
     title="SanJuan AI API",
     description="MVP backend for Puerto Rico's AI-native public knowledge infrastructure.",
-    version="0.3.0",
+    version="0.4.0",
 )
 
 HIGH_RISK_KEYWORDS = {
@@ -155,41 +156,50 @@ def _build_extractive_answer(question: str, language: str, results: list[dict[st
     top_result = results[0]
     source_name = top_result.get("source_name") or "a Puerto Rico source"
     excerpt = _truncate_text(str(top_result.get("text") or ""), max_length=900)
+    methods = top_result.get("retrieval_methods") or []
+    method_label = "+".join(methods) if methods else "hybrid"
 
     if language == "es":
         return (
-            f"Encontré información relevante en {source_name}. "
+            f"Encontré información relevante en {source_name} usando recuperación {method_label}. "
             "Como esta versión MVP todavía no usa generación con IA, aquí está el fragmento más relevante encontrado:\n\n"
             f"{excerpt}"
         )
 
     return (
-        f"I found relevant Puerto Rico source material from {source_name}. "
+        f"I found relevant Puerto Rico source material from {source_name} using {method_label} retrieval. "
         "Because this MVP is not using AI generation yet, here is the most relevant excerpt found:\n\n"
         f"{excerpt}"
     )
 
 
-def _build_fallback_answer(language: str, high_risk: bool) -> str:
+def _build_fallback_answer(language: str, high_risk: bool, ingestion_status: dict[str, Any]) -> str:
+    warnings = ingestion_status.get("warnings") or []
+    readiness_note = f" Current corpus warnings: {' '.join(warnings)}" if warnings else ""
+
     if language == "es":
         if high_risk:
             return (
                 "Todavía no encontré evidencia suficiente en las fuentes oficiales ingeridas para responder esta pregunta con seguridad. "
                 "Para temas de permisos, impuestos, salud, emergencias, beneficios públicos, policía, tribunales o inmigración, SanJuan AI no debe adivinar."
+                f"{readiness_note}"
             )
         return (
             "Todavía no encontré evidencia suficiente en los documentos ingeridos para responder con citas. "
-            "Prueba ejecutar la ingestión y el chunking, o agrega más fuentes relevantes al registro."
+            "Prueba ejecutar la ingestión, el chunking y el vector build, o agrega más fuentes relevantes al registro."
+            f"{readiness_note}"
         )
 
     if high_risk:
         return (
             "I did not find enough evidence in the ingested official sources to answer this safely. "
             "For permits, taxes, health, emergency, public benefits, police, court, legal, or immigration topics, SanJuan AI should not guess."
+            f"{readiness_note}"
         )
     return (
         "I did not find enough evidence in the ingested documents to answer with citations yet. "
-        "Try running ingestion and chunking, or add more relevant sources to the registry."
+        "Try running ingestion, chunking, and vector build, or add more relevant sources to the registry."
+        f"{readiness_note}"
     )
 
 
@@ -216,9 +226,9 @@ def _build_safety_note(language: str, high_risk: bool, has_results: bool) -> str
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
+def health() -> dict[str, Any]:
     """Health check endpoint for deployment and monitoring."""
-    return {"status": "ok", "service": "sanjuan-ai-api"}
+    return {"status": "ok", "service": "sanjuan-ai-api", "corpus": build_corpus_status_dict()}
 
 
 @app.get("/sources")
@@ -260,10 +270,12 @@ def get_source(source_id: str) -> dict[str, Any]:
 
 @app.post("/ask", response_model=AskAnswer)
 def ask(request: AskRequest) -> AskAnswer:
-    """Return a citation-first answer using local retrieval over chunks."""
+    """Return a citation-first answer using hybrid local retrieval over chunks and vectors."""
     language = _detect_language(request.question, request.language)
     high_risk = _is_high_risk_question(request.question)
-    results = search_chunks(
+    ingestion_status_payload = build_corpus_status_dict()
+    ingestion_status = IngestionStatus(**ingestion_status_payload)
+    results = search_hybrid(
         query=request.question,
         limit=5,
     )
@@ -279,16 +291,17 @@ def ask(request: AskRequest) -> AskAnswer:
             fallback_sources = [_source_to_answer_source(source) for source in official_sources]
 
         return AskAnswer(
-            answer=_build_fallback_answer(language=language, high_risk=high_risk),
+            answer=_build_fallback_answer(language=language, high_risk=high_risk, ingestion_status=ingestion_status_payload),
             language=language,
             confidence="low",
             citations=[],
             sources=fallback_sources,
             safety_note=_build_safety_note(language=language, high_risk=high_risk, has_results=False),
+            ingestion_status=ingestion_status,
         )
 
     top_score = float(results[0].get("score") or 0)
-    confidence = "high" if top_score >= 18 else "medium" if top_score >= 10 else "low"
+    confidence = "high" if top_score >= 0.8 else "medium" if top_score >= 0.45 else "low"
 
     return AskAnswer(
         answer=_build_extractive_answer(question=request.question, language=language, results=results),
@@ -297,4 +310,5 @@ def ask(request: AskRequest) -> AskAnswer:
         citations=citations[:3],
         sources=sources[:5],
         safety_note=_build_safety_note(language=language, high_risk=high_risk, has_results=True),
+        ingestion_status=ingestion_status,
     )
