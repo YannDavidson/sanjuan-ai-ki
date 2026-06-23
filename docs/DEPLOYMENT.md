@@ -39,15 +39,23 @@ Default values:
 
 ### Backend environment variables
 
-No secrets are required for the current MVP backend.
-
-Future likely variables:
+Recommended production variables:
 
 ```bash
 SANJUAN_ENV=production
+SANJUAN_API_VERSION=0.5.0
 SANJUAN_CORS_ORIGINS=https://your-web-domain.com
+SANJUAN_CORS_ALLOW_CREDENTIALS=false
 SANJUAN_RETRIEVAL_MODE=hybrid
 ```
+
+`SANJUAN_CORS_ORIGINS` is a comma-separated list. In production, set it explicitly to the deployed web origin. In local development, the API defaults to:
+
+```bash
+http://localhost:3000,http://127.0.0.1:3000
+```
+
+The API also adds conservative security headers, including `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`.
 
 ## Web deployment
 
@@ -90,6 +98,30 @@ Set:
 NEXT_PUBLIC_SANJUAN_API_URL=https://your-api-domain.com
 ```
 
+## Source refresh / scheduler
+
+The refresh pipeline is exposed through one command:
+
+```bash
+python -m packages.ingestion.refresh_corpus --pretty
+```
+
+This runs:
+
+1. batch source ingestion
+2. source status generation
+3. document chunking
+4. local vector build
+5. refresh summary artifact generation
+
+For scheduler planning without live fetching or writes:
+
+```bash
+python -m packages.ingestion.refresh_corpus --dry-run --pretty
+```
+
+Read `docs/SCHEDULER_PLAN.md` for hosted cron options and recommended cadence.
+
 ## Container deployment
 
 Build the API container from the repository root:
@@ -121,9 +153,10 @@ After deploying:
 
 1. Open `/health` on the API.
 2. Confirm the response includes `status: ok`.
-3. Set `NEXT_PUBLIC_SANJUAN_API_URL` in the web app.
-4. Open `/ask` and submit a test question.
-5. Open `/sources` and `/status`.
+3. Confirm `cors_configured: true` in production.
+4. Set `NEXT_PUBLIC_SANJUAN_API_URL` in the web app.
+5. Open `/ask` and submit a test question.
+6. Open `/sources` and `/status`.
 
 ## Current MVP limitation
 
@@ -132,5 +165,5 @@ The production API currently reads local file-based corpus artifacts from the re
 Recommended future upgrade:
 
 - Move documents/chunks/vectors into Postgres + pgvector or object storage.
-- Add a scheduled ingestion job.
-- Add an admin-only source refresh command.
+- Run source refresh through a scheduled worker/cron service.
+- Add an admin-only source refresh endpoint or queue-backed job trigger.
