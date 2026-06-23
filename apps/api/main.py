@@ -9,20 +9,47 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from apps.api.config import load_api_settings
 from packages.ingestion.corpus_status import build_corpus_status_dict
 from packages.ingestion.load_sources import SourceRegistryError, load_sources
 from packages.retrieval.hybrid_search import search_hybrid
 from packages.shared.answer_schema import AnswerSource, AskAnswer, Citation, IngestionStatus
 from packages.shared.source_schema import Source
 
+settings = load_api_settings()
+
 app = FastAPI(
     title="SanJuan AI API",
     description="MVP backend for Puerto Rico's AI-native public knowledge infrastructure.",
-    version="0.4.0",
+    version=settings.api_version,
 )
+
+if settings.cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(settings.cors_origins),
+        allow_credentials=settings.allow_credentials,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
+        max_age=600,
+    )
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next: Any) -> Response:
+    """Add conservative security headers for API responses."""
+    response: Response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault("X-SanJuan-AI-Env", settings.environment)
+    return response
+
 
 HIGH_RISK_KEYWORDS = {
     "benefits",
@@ -228,7 +255,13 @@ def _build_safety_note(language: str, high_risk: bool, has_results: bool) -> str
 @app.get("/health")
 def health() -> dict[str, Any]:
     """Health check endpoint for deployment and monitoring."""
-    return {"status": "ok", "service": "sanjuan-ai-api", "corpus": build_corpus_status_dict()}
+    return {
+        "status": "ok",
+        "service": "sanjuan-ai-api",
+        "environment": settings.environment,
+        "cors_configured": bool(settings.cors_origins),
+        "corpus": build_corpus_status_dict(),
+    }
 
 
 @app.get("/sources")
