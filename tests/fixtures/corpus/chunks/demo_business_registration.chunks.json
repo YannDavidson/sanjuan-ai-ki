@@ -1,0 +1,64 @@
+{
+  "document_id": "demo_business_registration",
+  "source_id": "demo_pr_business",
+  "source_name": "Demo Puerto Rico Business Registry",
+  "source_url": "https://example.test/puerto-rico-business-registration",
+  "title": "Puerto Rico Business Registration Demo",
+  "category": "business_registration",
+  "geography": "puerto_rico",
+  "language": "en",
+  "trust_level": "official",
+  "fetched_at": "2026-06-23T00:00:00Z",
+  "content_hash": "demo-business-registration-hash",
+  "chunk_count": 2,
+  "chunks": [
+    {
+      "chunk_id": "demo_business_registration:chunk:0",
+      "document_id": "demo_business_registration",
+      "chunk_index": 0,
+      "text": "Puerto Rico business registration generally starts with choosing a legal entity, preparing basic company information, and filing with the Puerto Rico Department of State.",
+      "character_count": 156,
+      "source_id": "demo_pr_business",
+      "source_name": "Demo Puerto Rico Business Registry",
+      "source_url": "https://example.test/puerto-rico-business-registration",
+      "title": "Puerto Rico Business Registration Demo",
+      "category": "business_registration",
+      "geography": "puerto_rico",
+      "language": "en",
+      "trust_level": "official",
+      "source_type": "fixture",
+      "fetched_at": "2026-06-23T00:00:00Z",
+      "content_hash": "demo-business-registration-hash",
+      "citation": {
+        "title": "Puerto Rico Business Registration Demo",
+        "url": "https://example.test/puerto-rico-business-registration",
+        "source_id": "demo_pr_business",
+        "source_name": "Demo Puerto Rico Business Registry"
+      }
+    },
+    {
+      "chunk_id": "demo_business_registration:chunk:1",
+      "document_id": "demo_business_registration",
+      "chunk_index": 1,
+      "text": "After entity registration, many businesses also review tax, merchant, municipal, and permit requirements before operating. This fixture helps SanJuan AI test citation-backed retrieval without live network access.",
+      "character_count": 194,
+      "source_id": "demo_pr_business",
+      "source_name": "Demo Puerto Rico Business Registry",
+      "source_url": "https://example.test/puerto-rico-business-registration",
+      "title": "Puerto Rico Business Registration Demo",
+      "category": "business_registration",
+      "geography": "puerto_rico",
+      "language": "en",
+      "trust_level": "official",
+      "source_type": "fixture",
+      "fetched_at": "2026-06-23T00:00:00Z",
+      "content_hash": "demo-business-registration-hash",
+      "citation": {
+        "title": "Puerto Rico Business Registration Demo",
+        "url": "https://example.test/puerto-rico-business-registration",
+        "source_id": "demo_pr_business",
+        "source_name": "Demo Puerto Rico Business Registry"
+      }
+    }
+  ]
+}
