@@ -1,0 +1,88 @@
+# SanJuan AI Development Guide
+
+This guide covers the local commands used by the MVP test and CI workflow.
+
+## Python setup
+
+From the repository root:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Smoke tests
+
+Run the smoke tests from the repository root:
+
+```bash
+pytest -q
+```
+
+The smoke tests intentionally avoid external network access and do not require generated corpus artifacts. They check:
+
+- source registry loading
+- corpus readiness behavior when document directories are missing
+- keyword retrieval safe empty fallback
+- hybrid retrieval safe empty fallback
+- FastAPI `/health`
+- FastAPI `/sources`
+- FastAPI `/ask` response contract
+
+## Backend
+
+Run the API locally:
+
+```bash
+uvicorn apps.api.main:app --reload
+```
+
+Open:
+
+```txt
+http://127.0.0.1:8000/docs
+http://127.0.0.1:8000/health
+```
+
+## Web app
+
+Run the web app:
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+Open:
+
+```txt
+http://localhost:3000
+```
+
+## Full local retrieval flow
+
+When you want real local retrieval artifacts, run:
+
+```bash
+python -m packages.ingestion.batch_ingest_sources --pretty
+python -m packages.retrieval.chunk_documents --pretty
+python -m packages.retrieval.local_vector_search build --pretty
+python -m packages.retrieval.hybrid_search "business registration Puerto Rico" --pretty
+```
+
+Then start the API and web app.
+
+## CI
+
+GitHub Actions runs on pushes and pull requests to `main`.
+
+The workflow currently checks:
+
+1. Python dependency install
+2. `pytest -q`
+3. Web dependency install
+4. `npm run build` for `apps/web`
+
+The CI workflow does not require secrets.
