@@ -9,6 +9,19 @@ sources:
     source_type: website
     update_frequency: unknown
     notes: Central official portal of the Government of Puerto Rico.
+    crawl:
+      enabled: true
+      max_pages_per_source: 10
+      allowed_paths:
+        - /servicios
+        - /agencias
+        - /directorio
+        - /tramites
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: pr_gov_alertas
     name: Portal de Alertas del Gobierno de Puerto Rico
@@ -20,6 +33,17 @@ sources:
     source_type: website
     update_frequency: real_time_or_as_needed
     notes: Alerts, missing persons, emergency and risk communications.
+    crawl:
+      enabled: true
+      max_pages_per_source: 5
+      allowed_paths:
+        - /alertas
+        - /avisos
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: pr_transparencia
     name: Portal de Transparencia Pública
@@ -31,6 +55,18 @@ sources:
     source_type: website
     update_frequency: as_needed
     notes: Public information request portal and agency transparency links.
+    crawl:
+      enabled: true
+      max_pages_per_source: 6
+      allowed_paths:
+        - /solicitudes
+        - /agencias
+        - /informacion
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: pr_dtop
     name: Departamento de Transportación y Obras Públicas
@@ -42,6 +78,19 @@ sources:
     source_type: website
     update_frequency: unknown
     notes: Transportation, roads, licenses, public works, and mobility-related information.
+    crawl:
+      enabled: true
+      max_pages_per_source: 10
+      allowed_paths:
+        - /servicios
+        - /tramites
+        - /licencias
+        - /avisos
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: pr_salud
     name: Departamento de Salud de Puerto Rico
@@ -53,6 +102,19 @@ sources:
     source_type: website
     update_frequency: unknown
     notes: Official health department information.
+    crawl:
+      enabled: true
+      max_pages_per_source: 10
+      allowed_paths:
+        - /servicios
+        - /programas
+        - /avisos
+        - /informacion
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: pr_drna
     name: Departamento de Recursos Naturales y Ambientales
@@ -64,6 +126,19 @@ sources:
     source_type: website
     update_frequency: unknown
     notes: Natural resources, environment, permits, coastal and ecological information.
+    crawl:
+      enabled: true
+      max_pages_per_source: 8
+      allowed_paths:
+        - /permisos
+        - /servicios
+        - /programas
+        - /avisos
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: pr_ddec
     name: Departamento de Desarrollo Económico y Comercio
@@ -75,6 +150,19 @@ sources:
     source_type: website
     update_frequency: unknown
     notes: Economic development, incentives, business resources, and entrepreneurship information.
+    crawl:
+      enabled: true
+      max_pages_per_source: 10
+      allowed_paths:
+        - /servicios
+        - /programas
+        - /incentivos
+        - /emprendimiento
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: pr_hacienda
     name: Departamento de Hacienda
@@ -86,6 +174,19 @@ sources:
     source_type: website
     update_frequency: unknown
     notes: Tax information, merchant registration, filings, and treasury services.
+    crawl:
+      enabled: true
+      max_pages_per_source: 10
+      allowed_paths:
+        - /servicios
+        - /comerciantes
+        - /contribuyentes
+        - /publicaciones
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: pr_estado
     name: Departamento de Estado de Puerto Rico
@@ -97,6 +198,19 @@ sources:
     source_type: website
     update_frequency: unknown
     notes: Corporate registry, certificates, and entity-related services.
+    crawl:
+      enabled: true
+      max_pages_per_source: 10
+      allowed_paths:
+        - /servicios
+        - /corporaciones
+        - /tramites
+        - /registros
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: san_juan_municipio
     name: Municipio de San Juan
@@ -108,6 +222,19 @@ sources:
     source_type: website
     update_frequency: unknown
     notes: Municipal services, permits, announcements, and local San Juan information.
+    crawl:
+      enabled: true
+      max_pages_per_source: 10
+      allowed_paths:
+        - /servicios
+        - /permisos
+        - /municipio
+        - /avisos
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: discover_puerto_rico
     name: Discover Puerto Rico
@@ -119,6 +246,19 @@ sources:
     source_type: website
     update_frequency: frequent
     notes: Official destination marketing organization for Puerto Rico tourism content.
+    crawl:
+      enabled: true
+      max_pages_per_source: 8
+      allowed_paths:
+        - /things-to-do
+        - /places-to-go
+        - /events
+        - /travelers
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: census_api
     name: U.S. Census Bureau Data API
@@ -141,6 +281,15 @@ sources:
     source_type: website
     update_frequency: dataset_dependent
     notes: Census data explorer for Puerto Rico geographies.
+    crawl:
+      enabled: false
+      max_pages_per_source: 1
+      allowed_paths: []
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: nws_san_juan
     name: National Weather Service San Juan
@@ -152,6 +301,18 @@ sources:
     source_type: website
     update_frequency: real_time_or_frequent
     notes: Weather forecasts, watches, warnings, advisories, and tropical weather information.
+    crawl:
+      enabled: true
+      max_pages_per_source: 8
+      allowed_paths:
+        - /sju
+        - /safety
+        - /wrn
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
 
   - id: usgs_earthquakes
     name: USGS Latest Earthquakes
@@ -163,3 +324,12 @@ sources:
     source_type: api_or_website
     update_frequency: real_time_or_frequent
     notes: Earthquake monitoring relevant to Puerto Rico and the Caribbean.
+    crawl:
+      enabled: false
+      max_pages_per_source: 1
+      allowed_paths: []
+      blocked_paths:
+        - /login
+        - /admin
+        - /search
+        - /calendar
