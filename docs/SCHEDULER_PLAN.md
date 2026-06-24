@@ -34,6 +34,17 @@ For CI/docs checks that should not fetch live websites:
 python -m packages.ingestion.refresh_corpus --dry-run --pretty
 ```
 
+Dry-run summary fields are intentionally explicit:
+
+```txt
+network_required=false
+writes_artifacts=false
+would_require_network=true
+would_write_artifacts=true
+```
+
+That means the dry run itself does not call the network or write artifacts, while the real refresh pipeline would do both.
+
 ## GitHub Actions dry-run check
 
 The repository includes a dedicated scheduled workflow:
