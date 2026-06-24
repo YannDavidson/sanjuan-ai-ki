@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from apps.api.config import load_api_settings
+from apps.api.rate_limit import InMemoryRateLimiter, RateLimitDecision
 from packages.ingestion.corpus_status import build_corpus_status_dict
 from packages.ingestion.load_sources import SourceRegistryError, load_sources
 from packages.retrieval.hybrid_search import search_hybrid
@@ -21,6 +22,7 @@ from packages.shared.answer_schema import AnswerSource, AskAnswer, Citation, Ing
 from packages.shared.source_schema import Source
 
 settings = load_api_settings()
+ask_rate_limiter = InMemoryRateLimiter(max_requests=settings.ask_rate_limit_per_minute)
 
 app = FastAPI(
     title="SanJuan AI API",
@@ -91,6 +93,41 @@ class AskRequest(BaseModel):
 
     question: str = Field(..., min_length=2, description="User question for SanJuan AI.")
     language: str | None = Field(default=None, description="Optional preferred response language, such as 'en' or 'es'.")
+
+
+def _client_identifier(request: Request) -> str:
+    """Return the best available client identifier for MVP rate limiting."""
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip() or "unknown-forwarded-client"
+
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+
+    if request.client and request.client.host:
+        return request.client.host
+
+    return "unknown-client"
+
+
+def _apply_ask_rate_limit(request: Request) -> RateLimitDecision | None:
+    """Apply the configured in-memory limiter to /ask requests."""
+    if not settings.rate_limit_enabled:
+        return None
+
+    decision = ask_rate_limiter.check(_client_identifier(request))
+    if not decision.allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded for /ask. Please slow down and try again shortly.",
+            headers={
+                "Retry-After": str(decision.retry_after_seconds),
+                "X-RateLimit-Limit": str(decision.limit),
+                "X-RateLimit-Remaining": str(decision.remaining),
+            },
+        )
+    return decision
 
 
 def _load_sources_or_500() -> list[Source]:
@@ -260,6 +297,8 @@ def health() -> dict[str, Any]:
         "service": "sanjuan-ai-api",
         "environment": settings.environment,
         "cors_configured": bool(settings.cors_origins),
+        "rate_limit_enabled": settings.rate_limit_enabled,
+        "ask_rate_limit_per_minute": settings.ask_rate_limit_per_minute,
         "corpus": build_corpus_status_dict(),
     }
 
@@ -302,8 +341,13 @@ def get_source(source_id: str) -> dict[str, Any]:
 
 
 @app.post("/ask", response_model=AskAnswer)
-def ask(request: AskRequest) -> AskAnswer:
+def ask(request: AskRequest, http_request: Request, response: Response) -> AskAnswer:
     """Return a citation-first answer using hybrid local retrieval over chunks and vectors."""
+    rate_limit_decision = _apply_ask_rate_limit(http_request)
+    if rate_limit_decision is not None:
+        response.headers["X-RateLimit-Limit"] = str(rate_limit_decision.limit)
+        response.headers["X-RateLimit-Remaining"] = str(rate_limit_decision.remaining)
+
     language = _detect_language(request.question, request.language)
     high_risk = _is_high_risk_question(request.question)
     ingestion_status_payload = build_corpus_status_dict()
