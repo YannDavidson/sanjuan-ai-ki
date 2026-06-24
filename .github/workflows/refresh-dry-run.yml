@@ -1,0 +1,31 @@
+name: Corpus Refresh Dry Run
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily at 09:15 UTC. This validates the refresh wrapper without live fetching.
+    - cron: "15 9 * * *"
+
+jobs:
+  refresh-dry-run:
+    name: Validate corpus refresh dry run
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run smoke tests
+        run: pytest -q
+
+      - name: Run corpus refresh dry run
+        run: python -m packages.ingestion.refresh_corpus --dry-run --pretty
