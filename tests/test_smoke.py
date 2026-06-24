@@ -17,9 +17,11 @@ from apps.api.rate_limit import InMemoryRateLimiter
 from packages.ingestion.corpus_status import build_corpus_status
 from packages.ingestion.load_sources import load_sources
 from packages.ingestion.refresh_corpus import refresh_corpus
+from packages.ingestion.safe_crawler import document_id_for_url, is_url_allowed, normalize_url
 from packages.retrieval.hybrid_search import search_hybrid
 from packages.retrieval.keyword_search import search_chunks
 from packages.shared.answer_schema import AskAnswer
+from packages.shared.source_schema import CrawlRules
 
 
 def test_source_registry_loads_registered_sources() -> None:
@@ -29,6 +31,41 @@ def test_source_registry_loads_registered_sources() -> None:
     assert any(source.id == "pr_gov_main" for source in sources)
     assert all(source.id for source in sources)
     assert all(source.url for source in sources)
+
+
+def test_source_registry_loads_crawl_rules() -> None:
+    sources = load_sources()
+    pr_gov = next(source for source in sources if source.id == "pr_gov_main")
+
+    assert pr_gov.crawl is not None
+    assert pr_gov.crawl.enabled is True
+    assert pr_gov.crawl.max_pages_per_source == 10
+    assert "/servicios" in pr_gov.crawl.allowed_paths
+    assert "/login" in pr_gov.crawl.blocked_paths
+
+
+def test_safe_crawler_url_normalization_and_rules() -> None:
+    base_url = "https://www.pr.gov/"
+    rules = CrawlRules(
+        enabled=True,
+        max_pages_per_source=10,
+        allowed_paths=["/servicios", "tramites"],
+        blocked_paths=["/login", "/admin"],
+    )
+
+    normalized = normalize_url(base_url, "/servicios/licencias?utm_source=test#section")
+
+    assert normalized == "https://www.pr.gov/servicios/licencias"
+    assert is_url_allowed(normalized, base_url, rules) is True
+    assert is_url_allowed("https://www.pr.gov/tramites", base_url, rules) is True
+    assert is_url_allowed("https://www.pr.gov/login", base_url, rules) is False
+    assert is_url_allowed("https://www.pr.gov/search", base_url, rules) is False
+    assert is_url_allowed("https://www.pr.gov/noticias", base_url, rules) is False
+    assert is_url_allowed("https://example.com/servicios", base_url, rules) is False
+    assert normalize_url(base_url, "mailto:info@example.com") is None
+    assert document_id_for_url("pr_gov_main", "https://www.pr.gov/servicios/licencias").startswith(
+        "pr_gov_main__servicios-licencias-"
+    )
 
 
 def test_api_settings_parse_cors_origins(monkeypatch) -> None:
