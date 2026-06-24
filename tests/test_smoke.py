@@ -11,8 +11,9 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from apps.api.config import DEFAULT_DEV_CORS_ORIGINS, load_api_settings, parse_csv_env
+from apps.api.config import DEFAULT_DEV_CORS_ORIGINS, load_api_settings, parse_bool_env, parse_csv_env, parse_int_env
 from apps.api.main import app
+from apps.api.rate_limit import InMemoryRateLimiter
 from packages.ingestion.corpus_status import build_corpus_status
 from packages.ingestion.load_sources import load_sources
 from packages.ingestion.refresh_corpus import refresh_corpus
@@ -47,6 +48,34 @@ def test_api_settings_default_dev_cors(monkeypatch) -> None:
 
     assert settings.environment == "development"
     assert settings.cors_origins == DEFAULT_DEV_CORS_ORIGINS
+
+
+def test_api_settings_parse_rate_limit_env(monkeypatch) -> None:
+    monkeypatch.setenv("SANJUAN_RATE_LIMIT_ENABLED", "false")
+    monkeypatch.setenv("SANJUAN_ASK_RATE_LIMIT_PER_MINUTE", "5")
+    settings = load_api_settings()
+
+    assert settings.rate_limit_enabled is False
+    assert settings.ask_rate_limit_per_minute == 5
+    assert parse_bool_env("yes") is True
+    assert parse_bool_env("off", default=True) is False
+    assert parse_int_env("bad", default=7, minimum=1) == 7
+    assert parse_int_env("0", default=7, minimum=1) == 1
+
+
+def test_in_memory_rate_limiter_blocks_after_limit() -> None:
+    limiter = InMemoryRateLimiter(max_requests=2, window_seconds=60)
+
+    first = limiter.check("client-a", now=100.0)
+    second = limiter.check("client-a", now=101.0)
+    third = limiter.check("client-a", now=102.0)
+    later = limiter.check("client-a", now=161.1)
+
+    assert first.allowed is True
+    assert second.allowed is True
+    assert third.allowed is False
+    assert third.retry_after_seconds > 0
+    assert later.allowed is True
 
 
 def test_corpus_status_handles_missing_directories(tmp_path: Path) -> None:
@@ -109,6 +138,8 @@ def test_fastapi_health_endpoint_includes_corpus_status_and_security_headers() -
     assert payload["service"] == "sanjuan-ai-api"
     assert "environment" in payload
     assert "cors_configured" in payload
+    assert "rate_limit_enabled" in payload
+    assert "ask_rate_limit_per_minute" in payload
     assert "corpus" in payload
     assert "ready_for_keyword_retrieval" in payload["corpus"]
 
@@ -123,11 +154,13 @@ def test_fastapi_sources_endpoint_returns_registry() -> None:
     assert any(source["id"] == "pr_gov_main" for source in payload["sources"])
 
 
-def test_fastapi_ask_endpoint_matches_answer_contract() -> None:
+def test_fastapi_ask_endpoint_matches_answer_contract_and_rate_limit_headers() -> None:
     client = TestClient(app)
     response = client.post("/ask", json={"question": "business registration Puerto Rico", "language": "en"})
 
     assert response.status_code == 200
+    assert "X-RateLimit-Limit" in response.headers
+    assert "X-RateLimit-Remaining" in response.headers
     answer = AskAnswer(**response.json())
     assert answer.answer
     assert answer.language == "en"
