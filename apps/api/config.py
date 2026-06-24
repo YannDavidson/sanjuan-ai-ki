@@ -16,6 +16,25 @@ DEFAULT_DEV_CORS_ORIGINS = (
 )
 
 
+def parse_bool_env(value: str | None, default: bool = False) -> bool:
+    """Parse a boolean environment variable."""
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def parse_int_env(value: str | None, default: int, minimum: int | None = None) -> int:
+    """Parse an integer environment variable with a safe fallback."""
+    try:
+        parsed = int(value) if value is not None else default
+    except ValueError:
+        parsed = default
+
+    if minimum is not None:
+        return max(minimum, parsed)
+    return parsed
+
+
 @dataclass(frozen=True)
 class ApiSettings:
     """Runtime configuration for the FastAPI service."""
@@ -24,6 +43,8 @@ class ApiSettings:
     cors_origins: tuple[str, ...]
     allow_credentials: bool
     api_version: str
+    rate_limit_enabled: bool
+    ask_rate_limit_per_minute: int
 
     @property
     def is_production(self) -> bool:
@@ -51,12 +72,20 @@ def load_api_settings() -> ApiSettings:
     else:
         cors_origins = DEFAULT_DEV_CORS_ORIGINS
 
-    allow_credentials = os.getenv("SANJUAN_CORS_ALLOW_CREDENTIALS", "false").lower() == "true"
-    api_version = os.getenv("SANJUAN_API_VERSION", "0.5.0")
+    allow_credentials = parse_bool_env(os.getenv("SANJUAN_CORS_ALLOW_CREDENTIALS"), default=False)
+    api_version = os.getenv("SANJUAN_API_VERSION", "0.6.0")
+    rate_limit_enabled = parse_bool_env(os.getenv("SANJUAN_RATE_LIMIT_ENABLED"), default=True)
+    ask_rate_limit_per_minute = parse_int_env(
+        os.getenv("SANJUAN_ASK_RATE_LIMIT_PER_MINUTE"),
+        default=30,
+        minimum=1,
+    )
 
     return ApiSettings(
         environment=environment,
         cors_origins=cors_origins,
         allow_credentials=allow_credentials,
         api_version=api_version,
+        rate_limit_enabled=rate_limit_enabled,
+        ask_rate_limit_per_minute=ask_rate_limit_per_minute,
     )
