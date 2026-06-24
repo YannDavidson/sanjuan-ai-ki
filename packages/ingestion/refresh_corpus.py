@@ -67,8 +67,13 @@ def build_dry_run_summary(
             "status_path": _relative_or_absolute(status_path),
             "refresh_log_path": _relative_or_absolute(refresh_log_path),
         },
-        "network_required": True,
-        "writes_artifacts": True,
+        # Dry runs describe what the real refresh would need, but they do not
+        # perform network calls or write corpus artifacts. Keeping both fields
+        # explicit prevents CI/tests from relying on ambiguous wording.
+        "network_required": False,
+        "writes_artifacts": False,
+        "would_require_network": True,
+        "would_write_artifacts": True,
     }
 
 
