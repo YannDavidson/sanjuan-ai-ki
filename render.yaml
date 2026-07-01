@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sanjuan-ai-api
+    name: sanjuan-ai-ki-api
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
