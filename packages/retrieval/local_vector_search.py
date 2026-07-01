@@ -34,6 +34,20 @@ DEFAULT_DIMENSIONS = 384
 LOCAL_HASH_MODEL = "hashing-vector-v1"
 
 
+def display_path(path: Path) -> str:
+    """Return a repo-relative path when possible, otherwise an absolute path.
+
+    Tests and CI often write vectors to pytest temporary directories outside the
+    repository. `Path.relative_to()` raises `ValueError` for those paths, so all
+    user-facing path summaries should use this helper instead of calling
+    `relative_to(REPO_ROOT)` directly.
+    """
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def hash_token(token: str, dimensions: int) -> int:
     """Map a token to a stable vector dimension."""
     digest = hashlib.sha256(token.encode("utf-8")).hexdigest()
@@ -162,13 +176,13 @@ def build_vector_store(
                 "document_id": document_id,
                 "status": "vectorized" if records else "skipped",
                 "vector_count": len(records),
-                "output_path": str(output_path.relative_to(REPO_ROOT)),
+                "output_path": display_path(output_path),
             }
         )
 
     return {
-        "chunks_dir": str(chunks_dir.relative_to(REPO_ROOT)) if chunks_dir.is_relative_to(REPO_ROOT) else str(chunks_dir),
-        "vectors_dir": str(vectors_dir.relative_to(REPO_ROOT)) if vectors_dir.is_relative_to(REPO_ROOT) else str(vectors_dir),
+        "chunks_dir": display_path(chunks_dir),
+        "vectors_dir": display_path(vectors_dir),
         "documents_seen": len(payloads),
         "documents_vectorized": len([result for result in results if result["status"] == "vectorized"]),
         "total_vectors": total_vectors,
