@@ -24,6 +24,7 @@ The tests intentionally avoid external network access. They check:
 
 - source registry loading
 - source crawl-rule validation
+- agency-specific loader profile coverage
 - safe crawler URL allow/block behavior
 - API runtime settings and CORS parsing
 - API rate limit settings parsing
@@ -157,6 +158,18 @@ python -m packages.ingestion.safe_crawler pr_gov_main --max-pages 3 --pretty
 ```
 
 Read `docs/CRAWLING_RULES.md` before increasing crawl depth.
+
+## Agency-specific loaders
+
+Agency loaders focus ingestion on curated public sections for high-value Puerto Rico sources such as PR.gov, Hacienda, DTOP, Salud, Estado, DDEC, Municipio de San Juan, and NWS San Juan.
+
+```bash
+python -m packages.ingestion.batch_ingest_sources --agency-loaders --max-pages 3 --pretty
+```
+
+Sources with profiles use agency-specific priority paths. Sources without profiles fall back to homepage-only ingestion.
+
+Read `docs/AGENCY_LOADERS.md` before adding or changing loader profiles.
 
 ## Deployment checks
 
