@@ -37,8 +37,10 @@ The tests intentionally avoid external network access. They check:
 - FastAPI `/sources`
 - FastAPI `/ask` response contract
 - FastAPI `/ask` structured answer contract
-- keyword retrieval against committed demo corpus fixtures
+- bilingual query expansion
+- mixed-language keyword retrieval against committed demo corpus fixtures
 - local vector-store generation from fixture chunks
+- bilingual local vector retrieval
 - hybrid retrieval over fixture chunks + generated fixture vectors
 
 ## Test fixtures
@@ -146,6 +148,21 @@ python -m packages.ingestion.refresh_corpus --dry-run --pretty
 ```
 
 Then start the API and web app.
+
+## Bilingual retrieval
+
+SanJuan AI uses Spanish-first bilingual retrieval because most Puerto Rico public information is Spanish-first.
+
+Try both English and Spanish queries:
+
+```bash
+python -m packages.retrieval.keyword_search "business registration Puerto Rico" --pretty
+python -m packages.retrieval.keyword_search "registro de negocio comerciante Puerto Rico" --pretty
+python -m packages.retrieval.local_vector_search search "permisos comerciante Puerto Rico" --pretty
+python -m packages.retrieval.hybrid_search "registro de negocio Puerto Rico" --pretty
+```
+
+Read `docs/BILINGUAL_RETRIEVAL.md` before changing glossary terms or ranking behavior.
 
 ## Bounded source crawling
 
