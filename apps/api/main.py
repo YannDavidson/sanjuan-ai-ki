@@ -18,7 +18,7 @@ from apps.api.rate_limit import InMemoryRateLimiter, RateLimitDecision
 from packages.ingestion.corpus_status import build_corpus_status_dict
 from packages.ingestion.load_sources import SourceRegistryError, load_sources
 from packages.retrieval.hybrid_search import search_hybrid
-from packages.shared.answer_schema import AnswerSource, AskAnswer, Citation, IngestionStatus
+from packages.shared.answer_schema import AnswerSource, AskAnswer, Citation, IngestionStatus, RelatedAgency, StructuredAnswer
 from packages.shared.source_schema import Source
 
 settings = load_api_settings()
@@ -85,6 +85,52 @@ HIGH_RISK_KEYWORDS = {
     "permisos",
     "policía",
     "salud",
+}
+
+STEP_HINTS = {
+    "apply",
+    "application",
+    "complete",
+    "create",
+    "fill",
+    "file",
+    "go to",
+    "register",
+    "renew",
+    "request",
+    "submit",
+    "visit",
+    "aplicar",
+    "completar",
+    "llenar",
+    "radicar",
+    "registrar",
+    "renovar",
+    "solicitar",
+    "someter",
+    "visitar",
+}
+
+REQUIREMENT_HINTS = {
+    "certificate",
+    "certification",
+    "document",
+    "fee",
+    "form",
+    "id",
+    "license",
+    "payment",
+    "required",
+    "requirement",
+    "tax id",
+    "certificado",
+    "documento",
+    "formulario",
+    "identificación",
+    "licencia",
+    "pago",
+    "requisito",
+    "requerido",
 }
 
 
@@ -193,11 +239,71 @@ def _dedupe_sources(sources: list[AnswerSource]) -> list[AnswerSource]:
     return output
 
 
+def _dedupe_citations(citations: list[Citation]) -> list[Citation]:
+    seen: set[str] = set()
+    output: list[Citation] = []
+    for citation in citations:
+        key = f"{citation.source_id}:{citation.url}"
+        if key in seen:
+            continue
+        seen.add(key)
+        output.append(citation)
+    return output
+
+
 def _truncate_text(text: str, max_length: int = 900) -> str:
     normalized = " ".join(text.split())
     if len(normalized) <= max_length:
         return normalized
     return f"{normalized[: max_length - 1].rstrip()}…"
+
+
+def _split_sentences(text: str) -> list[str]:
+    normalized = " ".join(text.split())
+    if not normalized:
+        return []
+    raw_sentences = []
+    for part in normalized.replace("\n", " ").split(". "):
+        sentence = part.strip(" .")
+        if len(sentence) >= 45:
+            raw_sentences.append(f"{sentence}.")
+    return raw_sentences
+
+
+def _sentences_matching(results: list[dict[str, Any]], hints: set[str], limit: int) -> list[str]:
+    output: list[str] = []
+    seen: set[str] = set()
+    for result in results:
+        for sentence in _split_sentences(str(result.get("text") or "")):
+            lowered = sentence.lower()
+            if any(hint in lowered for hint in hints):
+                cleaned = _truncate_text(sentence, max_length=220)
+                if cleaned not in seen:
+                    seen.add(cleaned)
+                    output.append(cleaned)
+            if len(output) >= limit:
+                return output
+    return output
+
+
+def _latest_fetched_at(citations: list[Citation]) -> str | None:
+    fetched_values = sorted([citation.fetched_at for citation in citations if citation.fetched_at], reverse=True)
+    return fetched_values[0] if fetched_values else None
+
+
+def _related_agencies_from_sources(sources: list[AnswerSource]) -> list[RelatedAgency]:
+    agencies: list[RelatedAgency] = []
+    for source in sources:
+        agencies.append(
+            RelatedAgency(
+                source_id=source.source_id,
+                name=source.source_name,
+                category=source.category,
+                url=source.url,
+                trust_level=source.trust_level,
+            )
+        )
+    return agencies[:5]
 
 
 def _detect_language(question: str, preferred_language: str | None) -> str:
@@ -216,25 +322,116 @@ def _is_high_risk_question(question: str) -> bool:
     return any(keyword in normalized for keyword in HIGH_RISK_KEYWORDS)
 
 
-def _build_extractive_answer(question: str, language: str, results: list[dict[str, Any]]) -> str:
-    top_result = results[0]
-    source_name = top_result.get("source_name") or "a Puerto Rico source"
-    excerpt = _truncate_text(str(top_result.get("text") or ""), max_length=900)
-    methods = top_result.get("retrieval_methods") or []
-    method_label = "+".join(methods) if methods else "hybrid"
+def _build_official_source_warning(language: str, high_risk: bool, citations: list[Citation]) -> str | None:
+    if not high_risk:
+        return None
+    has_official = any(citation.trust_level == "official" for citation in citations)
+    if language == "es":
+        if has_official:
+            return "Tema sensible: usa solamente las fuentes oficiales citadas para confirmar requisitos, fechas, costos o instrucciones antes de actuar."
+        return "Tema sensible: no hay suficientes citas oficiales en el corpus para dar una respuesta completa. No se deben inventar requisitos, fechas, costos ni instrucciones."
+    if has_official:
+        return "Sensitive topic: use the cited official sources to verify requirements, dates, fees, or instructions before acting."
+    return "Sensitive topic: there are not enough official citations in the corpus to give a complete answer. Do not infer requirements, dates, fees, or instructions."
 
+
+def _build_direct_answer(language: str, source_name: str, excerpt: str) -> str:
     if language == "es":
         return (
-            f"Encontré información relevante en {source_name} usando recuperación {method_label}. "
-            "Como esta versión MVP todavía no usa generación con IA, aquí está el fragmento más relevante encontrado:\n\n"
-            f"{excerpt}"
+            f"Encontré evidencia relevante en {source_name}. "
+            "La respuesta todavía es extractiva y debe verificarse con las citas oficiales antes de actuar. "
+            f"Fragmento principal: {_truncate_text(excerpt, max_length=360)}"
+        )
+    return (
+        f"I found relevant evidence from {source_name}. "
+        "This is still an extractive MVP answer and should be verified against the cited official sources before acting. "
+        f"Key excerpt: {_truncate_text(excerpt, max_length=360)}"
+    )
+
+
+def _build_structured_answer(
+    question: str,
+    language: str,
+    results: list[dict[str, Any]],
+    citations: list[Citation],
+    sources: list[AnswerSource],
+    confidence: str,
+    high_risk: bool,
+    ingestion_status: dict[str, Any],
+) -> StructuredAnswer:
+    if not results:
+        direct_answer = _build_fallback_answer(language=language, high_risk=high_risk, ingestion_status=ingestion_status)
+        return StructuredAnswer(
+            direct_answer=direct_answer,
+            steps_to_follow=[],
+            requirements=[],
+            official_citations=[],
+            last_updated=None,
+            confidence=confidence,
+            related_agencies=_related_agencies_from_sources(sources),
+            official_source_warning=_build_official_source_warning(language, high_risk, []),
         )
 
-    return (
-        f"I found relevant Puerto Rico source material from {source_name} using {method_label} retrieval. "
-        "Because this MVP is not using AI generation yet, here is the most relevant excerpt found:\n\n"
-        f"{excerpt}"
+    top_result = results[0]
+    source_name = str(top_result.get("source_name") or "a Puerto Rico source")
+    excerpt = str(top_result.get("text") or "")
+    official_citations = [citation for citation in citations if citation.trust_level == "official"] or citations
+    steps = _sentences_matching(results, STEP_HINTS, limit=5)
+    requirements = _sentences_matching(results, REQUIREMENT_HINTS, limit=5)
+
+    if not steps:
+        steps = [
+            "Open the cited official source.",
+            "Review the page for current requirements and instructions.",
+            "Contact the related agency if the page does not clearly answer your situation.",
+        ]
+        if language == "es":
+            steps = [
+                "Abre la fuente oficial citada.",
+                "Revisa la página para confirmar requisitos e instrucciones vigentes.",
+                "Contacta la agencia relacionada si la página no responde claramente tu situación.",
+            ]
+
+    if not requirements:
+        requirements = [
+            "No specific requirements were safely extracted from the current evidence. Verify the cited official page before acting."
+        ]
+        if language == "es":
+            requirements = [
+                "No se extrajeron requisitos específicos con suficiente seguridad. Verifica la página oficial citada antes de actuar."
+            ]
+
+    return StructuredAnswer(
+        direct_answer=_build_direct_answer(language, source_name, excerpt),
+        steps_to_follow=steps,
+        requirements=requirements,
+        official_citations=official_citations[:3],
+        last_updated=_latest_fetched_at(citations),
+        confidence=confidence,
+        related_agencies=_related_agencies_from_sources(sources),
+        official_source_warning=_build_official_source_warning(language, high_risk, citations),
     )
+
+
+def _build_answer_text(structured_answer: StructuredAnswer, language: str) -> str:
+    if language == "es":
+        parts = [f"Respuesta directa: {structured_answer.direct_answer}"]
+        if structured_answer.steps_to_follow:
+            parts.append("Pasos a seguir: " + " | ".join(structured_answer.steps_to_follow[:3]))
+        if structured_answer.requirements:
+            parts.append("Requisitos: " + " | ".join(structured_answer.requirements[:3]))
+        if structured_answer.official_source_warning:
+            parts.append(f"Nota: {structured_answer.official_source_warning}")
+        return "\n\n".join(parts)
+
+    parts = [f"Direct answer: {structured_answer.direct_answer}"]
+    if structured_answer.steps_to_follow:
+        parts.append("Steps to follow: " + " | ".join(structured_answer.steps_to_follow[:3]))
+    if structured_answer.requirements:
+        parts.append("Requirements: " + " | ".join(structured_answer.requirements[:3]))
+    if structured_answer.official_source_warning:
+        parts.append(f"Note: {structured_answer.official_source_warning}")
+    return "\n\n".join(parts)
 
 
 def _build_fallback_answer(language: str, high_risk: bool, ingestion_status: dict[str, Any]) -> str:
@@ -342,7 +539,7 @@ def get_source(source_id: str) -> dict[str, Any]:
 
 @app.post("/ask", response_model=AskAnswer)
 def ask(request: AskRequest, http_request: Request, response: Response) -> AskAnswer:
-    """Return a citation-first answer using hybrid local retrieval over chunks and vectors."""
+    """Return a structured, citation-first answer using hybrid local retrieval."""
     rate_limit_decision = _apply_ask_rate_limit(http_request)
     if rate_limit_decision is not None:
         response.headers["X-RateLimit-Limit"] = str(rate_limit_decision.limit)
@@ -358,6 +555,7 @@ def ask(request: AskRequest, http_request: Request, response: Response) -> AskAn
     )
 
     citations = [citation for result in results if (citation := _retrieval_result_to_citation(result)) is not None]
+    citations = _dedupe_citations(citations)
     sources = [source for result in results if (source := _retrieval_result_to_answer_source(result)) is not None]
     sources = _dedupe_sources(sources)
 
@@ -367,25 +565,47 @@ def ask(request: AskRequest, http_request: Request, response: Response) -> AskAn
             official_sources = [source for source in _load_sources_or_500() if source.trust_level == "official"][:5]
             fallback_sources = [_source_to_answer_source(source) for source in official_sources]
 
+        structured_answer = _build_structured_answer(
+            question=request.question,
+            language=language,
+            results=[],
+            citations=[],
+            sources=fallback_sources,
+            confidence="low",
+            high_risk=high_risk,
+            ingestion_status=ingestion_status_payload,
+        )
         return AskAnswer(
-            answer=_build_fallback_answer(language=language, high_risk=high_risk, ingestion_status=ingestion_status_payload),
+            answer=_build_answer_text(structured_answer, language),
             language=language,
             confidence="low",
             citations=[],
             sources=fallback_sources,
             safety_note=_build_safety_note(language=language, high_risk=high_risk, has_results=False),
             ingestion_status=ingestion_status,
+            structured_answer=structured_answer,
         )
 
     top_score = float(results[0].get("score") or 0)
     confidence = "high" if top_score >= 0.8 else "medium" if top_score >= 0.45 else "low"
+    structured_answer = _build_structured_answer(
+        question=request.question,
+        language=language,
+        results=results,
+        citations=citations,
+        sources=sources,
+        confidence=confidence,
+        high_risk=high_risk,
+        ingestion_status=ingestion_status_payload,
+    )
 
     return AskAnswer(
-        answer=_build_extractive_answer(question=request.question, language=language, results=results),
+        answer=_build_answer_text(structured_answer, language),
         language=language,
         confidence=confidence,
         citations=citations[:3],
         sources=sources[:5],
         safety_note=_build_safety_note(language=language, high_risk=high_risk, has_results=True),
         ingestion_status=ingestion_status,
+        structured_answer=structured_answer,
     )
