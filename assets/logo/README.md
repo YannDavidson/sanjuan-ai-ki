@@ -1,41 +1,43 @@
 # Logo Assets
 
-This directory contains SanJuan AI public beta logo assets.
+This directory documents SanJuan AI public beta logo assets.
 
-## Committed files
+## Canonical user-approved assets
+
+The canonical visual assets are hosted at:
 
 ```txt
-sanjuan-ai-logo.svg
-sanjuan-ai-icon.svg
+Logo: https://postimg.cc/w7GyBPCx
+Favicon/icon: https://postimg.cc/tYMZgfKs
 ```
 
-The web favicon is also available at:
+README currently displays the canonical logo using:
+
+```md
+<img src="https://i.postimg.cc/w7GyBPCx/SJAI-logo.png" alt="SanJuan AI logo" width="640" />
+```
+
+## Local fallback files
+
+These repository-safe SVG fallbacks remain available in case external image hosting is unavailable:
 
 ```txt
+assets/logo/sanjuan-ai-logo.svg
+assets/logo/sanjuan-ai-icon.svg
 apps/web/public/favicon.svg
 ```
 
-## Usage
+## Final recommended production assets
 
-README hero logo:
-
-```md
-<img src="assets/logo/sanjuan-ai-logo.svg" alt="SanJuan AI logo" width="640" />
-```
-
-Small icon / favicon:
-
-```md
-<img src="assets/logo/sanjuan-ai-icon.svg" alt="SanJuan AI icon" width="128" />
-```
-
-## Remaining visual assets before public beta
+Before a full public launch, download the canonical PNG files and commit them directly as:
 
 ```txt
-sanjuan-ai-social-preview.png
-favicon-dark.svg
-favicon-light.svg
+assets/logo/sanjuan-ai-logo.png
+assets/logo/sanjuan-ai-favicon.png
+apps/web/public/favicon.png
 ```
+
+Then update README and the web app to use the committed PNG files instead of external image hosting.
 
 ## Design direction
 
