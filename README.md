@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="assets/logo/sanjuan-ai-logo.svg" alt="SanJuan AI logo" width="640" />
+  <a href="https://postimg.cc/w7GyBPCx">
+    <img src="https://i.postimg.cc/w7GyBPCx/SJAI-logo.png" alt="SanJuan AI logo" width="640" />
+  </a>
 </p>
 
 # SanJuan AI KI
@@ -60,8 +62,10 @@ For sensitive topics such as permits, taxes, health, legal/court information, im
 
 | Asset | Status |
 | --- | --- |
-| Project logo | Added: `assets/logo/sanjuan-ai-logo.svg` |
-| Favicon/icon | Added: `assets/logo/sanjuan-ai-icon.svg` and `apps/web/public/favicon.svg` |
+| Project logo | Canonical source: https://postimg.cc/w7GyBPCx |
+| Favicon/icon | Canonical source: https://postimg.cc/tYMZgfKs |
+| Local logo fallback | Added: `assets/logo/sanjuan-ai-logo.svg` |
+| Local favicon fallback | Added: `assets/logo/sanjuan-ai-icon.svg` and `apps/web/public/favicon.svg` |
 | Architecture diagram | Added: `docs/ARCHITECTURE_OVERVIEW.md` |
 | Web app screenshot | To be captured before beta invite |
 | `/ask` demo GIF | To be captured before beta invite |
@@ -70,6 +74,8 @@ For sensitive topics such as permits, taxes, health, legal/court information, im
 Visual asset paths:
 
 ```txt
+Canonical logo: https://postimg.cc/w7GyBPCx
+Canonical favicon: https://postimg.cc/tYMZgfKs
 assets/logo/sanjuan-ai-logo.svg
 assets/logo/sanjuan-ai-icon.svg
 apps/web/public/favicon.svg
