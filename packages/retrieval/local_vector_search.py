@@ -20,11 +20,11 @@ import argparse
 import hashlib
 import json
 import math
-import re
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from packages.retrieval.bilingual import expand_document_text, expand_query_text
 from packages.retrieval.keyword_search import DEFAULT_CHUNKS_DIR, RetrievalFilters, matches_filters, tokenize
 from packages.shared.embedding_schema import EmbeddingRecord
 
@@ -35,13 +35,7 @@ LOCAL_HASH_MODEL = "hashing-vector-v1"
 
 
 def display_path(path: Path) -> str:
-    """Return a repo-relative path when possible, otherwise an absolute path.
-
-    Tests and CI often write vectors to pytest temporary directories outside the
-    repository. `Path.relative_to()` raises `ValueError` for those paths, so all
-    user-facing path summaries should use this helper instead of calling
-    `relative_to(REPO_ROOT)` directly.
-    """
+    """Return a repo-relative path when possible, otherwise an absolute path."""
     try:
         return str(path.relative_to(REPO_ROOT))
     except ValueError:
@@ -64,7 +58,6 @@ def embed_text_local(text: str, dimensions: int = DEFAULT_DIMENSIONS) -> list[fl
     vector = [0.0] * dimensions
     for token, count in counts.items():
         index = hash_token(token, dimensions)
-        # Log-scaled term frequency keeps repeated boilerplate from dominating.
         vector[index] += 1.0 + math.log(count)
 
     norm = math.sqrt(sum(value * value for value in vector))
@@ -103,10 +96,22 @@ def load_chunk_files(chunks_dir: Path = DEFAULT_CHUNKS_DIR) -> list[dict[str, An
     return payloads
 
 
+def _chunk_embedding_text(chunk: dict[str, Any]) -> str:
+    metadata_terms = [
+        str(chunk.get("title") or ""),
+        str(chunk.get("source_name") or ""),
+        str(chunk.get("category") or ""),
+        str(chunk.get("geography") or ""),
+        str(chunk.get("language") or ""),
+    ]
+    return expand_document_text(str(chunk.get("text") or ""), metadata_terms=metadata_terms)
+
+
 def build_embedding_record(chunk: dict[str, Any], dimensions: int = DEFAULT_DIMENSIONS) -> EmbeddingRecord:
-    """Create a local embedding record from one retrieval chunk."""
+    """Create a local bilingual embedding record from one retrieval chunk."""
     chunk_id = str(chunk.get("chunk_id") or "unknown-chunk")
-    vector = embed_text_local(str(chunk.get("text") or ""), dimensions=dimensions)
+    embedding_text = _chunk_embedding_text(chunk)
+    vector = embed_text_local(embedding_text, dimensions=dimensions)
     embedding_id = f"{chunk_id}:embedding:local_hash:{LOCAL_HASH_MODEL}:{dimensions}"
     citation = chunk.get("citation") or {}
 
@@ -133,6 +138,7 @@ def build_embedding_record(chunk: dict[str, Any], dimensions: int = DEFAULT_DIME
             "character_count": chunk.get("character_count"),
             "fetched_at": chunk.get("fetched_at"),
             "source_type": chunk.get("source_type"),
+            "bilingual_expansion": True,
         },
     )
 
@@ -162,6 +168,7 @@ def build_vector_store(
                     "provider": "local_hash",
                     "model": LOCAL_HASH_MODEL,
                     "dimensions": dimensions,
+                    "bilingual_expansion": True,
                     "embeddings": records,
                 },
                 file,
@@ -189,6 +196,7 @@ def build_vector_store(
         "provider": "local_hash",
         "model": LOCAL_HASH_MODEL,
         "dimensions": dimensions,
+        "bilingual_expansion": True,
         "results": results,
     }
 
@@ -260,7 +268,7 @@ def search_vectors(
         return []
 
     dimensions = int(records[0].get("dimensions") or DEFAULT_DIMENSIONS)
-    query_vector = embed_text_local(query, dimensions=dimensions)
+    query_vector = embed_text_local(expand_query_text(query), dimensions=dimensions)
     scored: list[dict[str, Any]] = []
 
     for record in records:
@@ -270,7 +278,9 @@ def search_vectors(
         score = cosine_similarity(query_vector, vector)
         if score <= 0:
             continue
-        scored.append(build_vector_result(record, score=score))
+        result = build_vector_result(record, score=score)
+        result["query_expansion"] = expand_query_text(query)
+        scored.append(result)
 
     scored.sort(key=lambda item: item["score"], reverse=True)
     return scored[: max(limit, 0)]
