@@ -36,6 +36,7 @@ export default function AskPage() {
   }
 
   const ingestion = answer?.ingestion_status;
+  const structured = answer?.structured_answer;
   const hasCorpusWarnings = Boolean(ingestion?.warnings?.length);
 
   return (
@@ -44,7 +45,7 @@ export default function AskPage() {
       <h1>Ask with sources, not guesses.</h1>
       <p className="lede">
         This page calls the FastAPI backend and renders SanJuan AI's citation-first answer contract: direct answer,
-        confidence, citations, source cards, safety notes, and corpus readiness.
+        steps, requirements, citations, source cards, safety notes, and corpus readiness.
       </p>
 
       <div className="chat-shell section">
@@ -89,16 +90,74 @@ export default function AskPage() {
 
       {answer ? (
         <div className="card strong">
-          <div className="eyebrow">Backend response</div>
+          <div className="eyebrow">Structured backend response</div>
           <div className="answer-box">
-            <h2>{answer.answer}</h2>
+            <h2>{structured?.direct_answer || answer.answer}</h2>
             <div className="badge-row">
-              <span className="badge">confidence: {answer.confidence}</span>
+              <span className="badge">confidence: {structured?.confidence || answer.confidence}</span>
               <span className="badge">language: {answer.language}</span>
+              {structured?.last_updated && <span className="badge">last updated: {structured.last_updated}</span>}
               <span className="badge official">citation-first contract</span>
             </div>
-            {answer.safety_note && <p className="safety-note">{answer.safety_note}</p>}
+            {(structured?.official_source_warning || answer.safety_note) && (
+              <p className="safety-note">{structured?.official_source_warning || answer.safety_note}</p>
+            )}
           </div>
+
+          {structured && (
+            <section className="section compact-section">
+              <h2>Steps and requirements</h2>
+              <div className="two-column-grid">
+                <div className="card">
+                  <h3>Steps to follow</h3>
+                  {structured.steps_to_follow.length > 0 ? (
+                    <ol>
+                      {structured.steps_to_follow.map((step) => (
+                        <li key={step}>{step}</li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p>No steps were safely extracted from the current evidence.</p>
+                  )}
+                </div>
+                <div className="card">
+                  <h3>Requirements</h3>
+                  {structured.requirements.length > 0 ? (
+                    <ul>
+                      {structured.requirements.map((requirement) => (
+                        <li key={requirement}>{requirement}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No requirements were safely extracted from the current evidence.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {structured?.related_agencies && structured.related_agencies.length > 0 && (
+            <section className="section compact-section">
+              <h2>Related agencies</h2>
+              <div className="source-grid">
+                {structured.related_agencies.map((agency) => (
+                  <article className="card" key={agency.source_id}>
+                    <div className="badge-row">
+                      {agency.trust_level && <span className="badge official">{agency.trust_level}</span>}
+                      {agency.category && <span className="badge">{agency.category}</span>}
+                    </div>
+                    <h3>{agency.name}</h3>
+                    <p>{agency.source_id}</p>
+                    {agency.url && (
+                      <a className="button" href={agency.url} target="_blank" rel="noreferrer">
+                        Open agency
+                      </a>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
           {ingestion && (
             <section className="section compact-section">
@@ -135,10 +194,10 @@ export default function AskPage() {
           )}
 
           <section className="section compact-section">
-            <h2>Citations</h2>
-            {answer.citations.length > 0 ? (
+            <h2>Official citations</h2>
+            {(structured?.official_citations?.length || answer.citations.length) > 0 ? (
               <div className="source-grid">
-                {answer.citations.map((citation) => (
+                {(structured?.official_citations?.length ? structured.official_citations : answer.citations).map((citation) => (
                   <article className="card" key={`${citation.source_id}-${citation.url}`}>
                     <div className="badge-row">
                       <span className="badge official">citation</span>
