@@ -7,6 +7,10 @@ Run from the repository root:
 To enable bounded crawling for sources with crawl.enabled=true:
 
     python -m packages.ingestion.batch_ingest_sources --crawl --pretty
+
+To prefer agency-specific loaders for high-value Puerto Rico sources:
+
+    python -m packages.ingestion.batch_ingest_sources --agency-loaders --pretty
 """
 
 from __future__ import annotations
@@ -17,6 +21,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from packages.ingestion.agency_loaders import get_agency_loader_profile, load_agency_source
 from packages.ingestion.fetch_static_page import StaticPageFetchError, fetch_static_page
 from packages.ingestion.load_sources import DEFAULT_SOURCE_REGISTRY_PATH, SourceRegistryError, load_sources_from_path
 from packages.ingestion.safe_crawler import CrawlError, crawl_source
@@ -94,6 +99,7 @@ def _relative_path(path: Path) -> str:
 
 
 def _result_for_document(source: Source, document: dict[str, Any], output_path: Path) -> dict[str, Any]:
+    loader = document.get("loader") or {"type": "homepage"}
     return {
         "source_id": source.id,
         "document_id": document.get("document_id"),
@@ -104,6 +110,7 @@ def _result_for_document(source: Source, document: dict[str, Any], output_path: 
         "error": document.get("error"),
         "content_length": document.get("content_length", 0),
         "crawl_depth": document.get("crawl_depth", 0),
+        "loader_type": loader.get("type"),
     }
 
 
@@ -160,6 +167,7 @@ def ingest_source_with_crawl(
                 "error": error.get("error"),
                 "content_length": 0,
                 "crawl_depth": error.get("depth", 0),
+                "loader_type": "bounded_crawl",
             }
         )
 
@@ -182,12 +190,84 @@ def ingest_source_with_crawl(
     return results
 
 
+def ingest_source_with_agency_loader(
+    source: Source,
+    output_dir: Path,
+    timeout_seconds: int,
+    pretty: bool,
+    max_pages_override: int | None = None,
+) -> list[dict[str, Any]]:
+    """Ingest one source using its agency-specific loader when available."""
+    if get_agency_loader_profile(source.id) is None:
+        return ingest_source_homepage(source, output_dir=output_dir, timeout_seconds=timeout_seconds, pretty=pretty)
+
+    try:
+        agency_result = load_agency_source(source, timeout_seconds=timeout_seconds, max_pages_override=max_pages_override)
+    except (StaticPageFetchError, ValueError) as exc:
+        document = {
+            "document_id": source.id,
+            "source": source.model_dump(mode="json"),
+            "url": str(source.url),
+            "title": None,
+            "text": "",
+            "fetched_at": None,
+            "content_hash": None,
+            "crawl_depth": 0,
+            "status": "failed",
+            "error": str(exc),
+            "loader": {"type": "agency_specific"},
+        }
+        output_path = write_document(document, output_dir=output_dir, pretty=pretty)
+        return [_result_for_document(source, document, output_path)]
+
+    results: list[dict[str, Any]] = []
+    for document in agency_result["documents"]:
+        output_path = write_document(document, output_dir=output_dir, pretty=pretty)
+        results.append(_result_for_document(source, document, output_path))
+
+    for error in agency_result.get("errors", []):
+        results.append(
+            {
+                "source_id": source.id,
+                "document_id": None,
+                "name": source.name,
+                "url": error.get("url"),
+                "status": "failed",
+                "output_path": None,
+                "error": error.get("error"),
+                "content_length": 0,
+                "crawl_depth": error.get("depth", 0),
+                "loader_type": "agency_specific",
+            }
+        )
+
+    if not results:
+        document = {
+            "document_id": source.id,
+            "source": source.model_dump(mode="json"),
+            "url": str(source.url),
+            "title": None,
+            "text": "",
+            "fetched_at": None,
+            "content_hash": None,
+            "crawl_depth": 0,
+            "status": "failed",
+            "error": "Agency loader completed without any documents.",
+            "loader": {"type": "agency_specific"},
+        }
+        output_path = write_document(document, output_dir=output_dir, pretty=pretty)
+        return [_result_for_document(source, document, output_path)]
+
+    return results
+
+
 def ingest_sources(
     registry_path: Path,
     output_dir: Path,
     timeout_seconds: int,
     pretty: bool = False,
     crawl: bool = False,
+    agency_loaders: bool = False,
     max_pages_override: int | None = None,
 ) -> dict[str, Any]:
     """Batch ingest all registered sources and return a summary."""
@@ -195,7 +275,17 @@ def ingest_sources(
     results: list[dict[str, Any]] = []
 
     for source in sources:
-        if crawl:
+        if agency_loaders:
+            results.extend(
+                ingest_source_with_agency_loader(
+                    source,
+                    output_dir=output_dir,
+                    timeout_seconds=timeout_seconds,
+                    pretty=pretty,
+                    max_pages_override=max_pages_override,
+                )
+            )
+        elif crawl:
             results.extend(
                 ingest_source_with_crawl(
                     source,
@@ -213,11 +303,20 @@ def ingest_sources(
     successful = [result for result in results if result["status"] == "success"]
     failed = [result for result in results if result["status"] == "failed"]
     crawled_sources = [source for source in sources if source.crawl and source.crawl.enabled]
+    agency_profile_sources = [source for source in sources if get_agency_loader_profile(source.id) is not None]
+
+    if agency_loaders:
+        mode = "agency_loaders"
+    elif crawl:
+        mode = "bounded_crawl"
+    else:
+        mode = "homepage_only"
 
     return {
-        "mode": "bounded_crawl" if crawl else "homepage_only",
+        "mode": mode,
         "total_sources": len(sources),
         "crawl_enabled_sources": len(crawled_sources),
+        "agency_loader_sources": len(agency_profile_sources),
         "total_documents_or_attempts": len(results),
         "successful": len(successful),
         "failed": len(failed),
@@ -250,10 +349,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable bounded crawling for sources with crawl.enabled=true. Default is homepage-only ingestion.",
     )
     parser.add_argument(
+        "--agency-loaders",
+        action="store_true",
+        help="Prefer agency-specific loaders for configured high-value sources, falling back to homepage-only ingestion.",
+    )
+    parser.add_argument(
         "--max-pages",
         type=int,
         default=None,
-        help="Optional maximum page override for each crawl-enabled source.",
+        help="Optional maximum page override for crawl-enabled or agency-loader sources.",
     )
     parser.add_argument(
         "--pretty",
@@ -274,6 +378,7 @@ def main() -> int:
             timeout_seconds=args.timeout,
             pretty=args.pretty,
             crawl=args.crawl,
+            agency_loaders=args.agency_loaders,
             max_pages_override=args.max_pages,
         )
     except SourceRegistryError as exc:
