@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">SanJuan AI logo</title>
+  <desc id="desc">SanJuan AI public beta logo with Puerto Rico garita icon and Sanjuan.ai wordmark.</desc>
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05c8df"/>
+      <stop offset="0.5" stop-color="#008fc6"/>
+      <stop offset="1" stop-color="#0063a8"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff6a00"/>
+      <stop offset="0.55" stop-color="#ffb431"/>
+      <stop offset="1" stop-color="#ffe45c"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5a00"/>
+      <stop offset="1" stop-color="#ff9f1c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#00111f" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="1280" height="640" fill="none"/>
+  <g transform="translate(145 95)" filter="url(#shadow)">
+    <path d="M115 172 C115 93 181 38 260 38 C340 38 405 93 405 172 L405 182 L115 182 Z" fill="url(#gold)"/>
+    <path d="M115 172 C117 103 162 53 229 42 C183 80 161 123 161 182 L115 182 Z" fill="#ff5a12" opacity="0.85"/>
+    <path d="M250 38 L282 38 L270 -8 L262 -8 Z" fill="#008fca"/>
+    <circle cx="260" cy="-24" r="28" fill="url(#blue)"/>
+    <ellipse cx="260" cy="182" rx="172" ry="24" fill="#0098d2"/>
+    <ellipse cx="260" cy="177" rx="170" ry="17" fill="#05c8df" opacity="0.65"/>
+    <path d="M138 190 L382 190 L382 400 C382 425 371 446 352 459 L260 512 L168 459 C149 446 138 425 138 400 Z" fill="url(#blue)"/>
+    <path d="M138 190 L206 190 L206 430 C206 451 218 472 238 482 L168 459 C149 446 138 425 138 400 Z" fill="#0068ac" opacity="0.75"/>
+    <path d="M138 398 C198 420 258 440 382 396 L382 400 C382 425 371 446 352 459 L260 512 L168 459 C149 446 138 425 138 400 Z" fill="#006db3" opacity="0.65"/>
+    <rect x="226" y="243" width="68" height="36" rx="3" fill="#fff6c5"/>
+    <rect x="226" y="325" width="68" height="36" rx="3" fill="#fff6c5"/>
+    <path d="M315 73 C355 88 381 122 390 162" stroke="#fff6a9" stroke-width="11" stroke-linecap="round" opacity="0.55"/>
+    <path d="M356 394 C378 386 390 391 398 407" stroke="#2adcf0" stroke-width="23" stroke-linecap="round" opacity="0.35"/>
+  </g>
+  <g transform="translate(500 260)">
+    <text x="0" y="0" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="800" font-size="112" letter-spacing="-6" fill="#0068ad" stroke="#00111f" stroke-width="2">Sanjuan</text>
+    <text x="520" y="0" font-family="Inter, Arial, Helvetica, sans-serif" font-weight="800" font-size="112" letter-spacing="-6" fill="url(#orange)" stroke="#401400" stroke-width="1.5">.ai</text>
+  </g>
+</svg>
