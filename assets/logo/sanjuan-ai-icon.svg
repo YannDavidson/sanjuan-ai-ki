@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">SanJuan AI favicon</title>
+  <desc id="desc">SanJuan AI icon based on a Puerto Rico garita.</desc>
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05c8df"/>
+      <stop offset="0.5" stop-color="#008fc6"/>
+      <stop offset="1" stop-color="#0063a8"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff6a00"/>
+      <stop offset="0.55" stop-color="#ffb431"/>
+      <stop offset="1" stop-color="#ffe45c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="13" flood-color="#00111f" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="none"/>
+  <g transform="translate(-4 0) scale(.96)" filter="url(#shadow)">
+    <path d="M120 184 C120 105 186 50 265 50 C345 50 410 105 410 184 L410 196 L120 196 Z" fill="url(#gold)"/>
+    <path d="M120 184 C123 114 168 65 234 53 C188 91 166 134 166 196 L120 196 Z" fill="#ff5a12" opacity="0.86"/>
+    <path d="M255 50 L287 50 L275 4 L267 4 Z" fill="#008fca"/>
+    <circle cx="265" cy="-10" r="28" fill="url(#blue)"/>
+    <ellipse cx="265" cy="196" rx="172" ry="24" fill="#0098d2"/>
+    <ellipse cx="265" cy="191" rx="170" ry="17" fill="#05c8df" opacity="0.65"/>
+    <path d="M143 204 L387 204 L387 414 C387 439 376 460 357 473 L265 526 L173 473 C154 460 143 439 143 414 Z" fill="url(#blue)"/>
+    <path d="M143 204 L211 204 L211 444 C211 465 223 486 243 496 L173 473 C154 460 143 439 143 414 Z" fill="#0068ac" opacity="0.75"/>
+    <path d="M143 412 C203 434 263 454 387 410 L387 414 C387 439 376 460 357 473 L265 526 L173 473 C154 460 143 439 143 414 Z" fill="#006db3" opacity="0.65"/>
+    <rect x="231" y="257" width="68" height="36" rx="3" fill="#fff6c5"/>
+    <rect x="231" y="339" width="68" height="36" rx="3" fill="#fff6c5"/>
+    <path d="M320 85 C360 100 386 134 395 174" stroke="#fff6a9" stroke-width="11" stroke-linecap="round" opacity="0.55"/>
+    <path d="M361 408 C383 400 395 405 403 421" stroke="#2adcf0" stroke-width="23" stroke-linecap="round" opacity="0.35"/>
+  </g>
+</svg>
