@@ -238,3 +238,9 @@ def test_fastapi_ask_endpoint_matches_answer_contract_and_rate_limit_headers() -
     assert answer.language == "en"
     assert answer.confidence in {"high", "medium", "low", "placeholder"}
     assert answer.ingestion_status is not None
+    assert answer.structured_answer is not None
+    assert answer.structured_answer.direct_answer
+    assert isinstance(answer.structured_answer.steps_to_follow, list)
+    assert isinstance(answer.structured_answer.requirements, list)
+    assert isinstance(answer.structured_answer.related_agencies, list)
+    assert answer.structured_answer.confidence in {"high", "medium", "low", "placeholder"}
