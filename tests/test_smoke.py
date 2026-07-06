@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 from apps.api.config import DEFAULT_DEV_CORS_ORIGINS, load_api_settings, parse_bool_env, parse_csv_env, parse_int_env
 from apps.api.main import app
 from apps.api.rate_limit import InMemoryRateLimiter
+from packages.ingestion.agency_loaders import build_priority_urls, get_agency_loader_profile, list_agency_loader_profiles
 from packages.ingestion.corpus_status import build_corpus_status
 from packages.ingestion.load_sources import load_sources
 from packages.ingestion.refresh_corpus import refresh_corpus
@@ -42,6 +43,38 @@ def test_source_registry_loads_crawl_rules() -> None:
     assert pr_gov.crawl.max_pages_per_source == 10
     assert "/servicios" in pr_gov.crawl.allowed_paths
     assert "/login" in pr_gov.crawl.blocked_paths
+
+
+def test_agency_loader_profiles_cover_high_value_sources() -> None:
+    expected_source_ids = {
+        "pr_gov_main",
+        "pr_hacienda",
+        "pr_dtop",
+        "pr_salud",
+        "pr_estado",
+        "pr_ddec",
+        "san_juan_municipio",
+        "nws_san_juan",
+    }
+    profiles = list_agency_loader_profiles()
+
+    assert {profile.source_id for profile in profiles} == expected_source_ids
+    assert get_agency_loader_profile("pr_hacienda") is not None
+    assert get_agency_loader_profile("census_api") is None
+    assert all(profile.priority_paths for profile in profiles)
+
+
+def test_agency_loader_priority_urls_are_same_domain_and_curated() -> None:
+    sources = load_sources()
+    pr_gov = next(source for source in sources if source.id == "pr_gov_main")
+    profile = get_agency_loader_profile("pr_gov_main")
+
+    assert profile is not None
+    urls = build_priority_urls(pr_gov, profile)
+
+    assert "https://www.pr.gov/servicios" in urls
+    assert "https://www.pr.gov/agencias" in urls
+    assert all(url.startswith("https://www.pr.gov") for url in urls)
 
 
 def test_safe_crawler_url_normalization_and_rules() -> None:
