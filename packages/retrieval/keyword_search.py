@@ -81,7 +81,10 @@ def normalize(value: str | None) -> str:
 
 def tokenize(value: str | None) -> list[str]:
     """Tokenize query or document text for MVP keyword scoring."""
-    normalized = normalize(value)
+    # Import locally to avoid a circular import: bilingual.py imports tokenize.
+    from packages.retrieval.bilingual import normalize_for_bilingual
+
+    normalized = normalize_for_bilingual(normalize(value))
     tokens = re.findall(r"[\wáéíóúüñ]+", normalized, flags=re.IGNORECASE)
     return [token for token in tokens if len(token) > 1 and token not in STOPWORDS]
 
@@ -124,49 +127,85 @@ def matches_filters(chunk: dict[str, Any], filters: RetrievalFilters | None) -> 
     return True
 
 
+def _chunk_search_text(chunk: dict[str, Any]) -> str:
+    return " ".join(
+        str(value or "")
+        for value in (
+            chunk.get("text"),
+            chunk.get("title"),
+            chunk.get("source_name"),
+            chunk.get("category"),
+            chunk.get("geography"),
+            chunk.get("language"),
+        )
+    )
+
+
 def score_chunk(query: str, query_tokens: list[str], chunk: dict[str, Any]) -> float:
-    """Score a chunk using simple transparent keyword heuristics."""
+    """Score a chunk using simple transparent bilingual keyword heuristics."""
+    from packages.retrieval.bilingual import expand_document_text, expand_query_text
+
     if not query_tokens:
         return 0.0
 
-    text = normalize(chunk.get("text"))
+    expanded_query = expand_query_text(query)
+    expanded_query_tokens = tokenize(expanded_query)
+    query_token_set = set(expanded_query_tokens)
+    if not query_token_set:
+        return 0.0
+
+    raw_text = _chunk_search_text(chunk)
+    expanded_text = expand_document_text(
+        str(chunk.get("text") or ""),
+        metadata_terms=[
+            str(chunk.get("title") or ""),
+            str(chunk.get("source_name") or ""),
+            str(chunk.get("category") or ""),
+            str(chunk.get("geography") or ""),
+        ],
+    )
+    text = normalize(f"{raw_text} {expanded_text}")
     title = normalize(chunk.get("title"))
     source_name = normalize(chunk.get("source_name"))
     category = normalize(chunk.get("category"))
     combined_metadata = f"{title} {source_name} {category}"
     query_normalized = normalize(query)
+    expanded_query_normalized = normalize(expanded_query)
 
     text_tokens = tokenize(text)
     text_token_set = set(text_tokens)
-    query_token_set = set(query_tokens)
+    original_query_token_set = set(query_tokens)
     overlap = query_token_set.intersection(text_token_set)
+    original_overlap = original_query_token_set.intersection(text_token_set)
 
-    if not overlap and query_normalized not in text:
+    if not overlap and query_normalized not in text and expanded_query_normalized not in text:
         return 0.0
 
     score = 0.0
 
-    # Exact phrase match is a strong signal for this MVP search layer.
     if query_normalized and query_normalized in text:
         score += 12.0
+    elif expanded_query_normalized and expanded_query_normalized in text:
+        score += 6.0
 
-    # Token overlap favors chunks covering more of the user's question.
-    score += len(overlap) * 4.0
+    score += len(overlap) * 3.0
+    score += len(original_overlap) * 2.0
     score += (len(overlap) / max(len(query_token_set), 1)) * 8.0
 
-    # Repeated term frequency gives a mild boost without dominating results.
     for token in overlap:
-        score += min(text_tokens.count(token), 5) * 0.4
+        score += min(text_tokens.count(token), 5) * 0.35
 
-    # Metadata matches are helpful for pages with broad civic content.
     for token in query_token_set:
         if token in combined_metadata:
             score += 2.0
 
-    # Trust level matters because SanJuan AI should favor official sources.
+    if chunk.get("language") == "es":
+        # Puerto Rico source material is Spanish-first. Give Spanish chunks a tiny
+        # boost so English questions can still surface official Spanish pages.
+        score += 0.75
+
     score += TRUST_BOOSTS.get(str(chunk.get("trust_level") or ""), 0.0)
 
-    # Slightly prefer shorter chunks when scores are otherwise similar.
     character_count = int(chunk.get("character_count") or len(text) or 1)
     score += 1 / math.sqrt(max(character_count, 1))
 
@@ -207,7 +246,10 @@ def search_chunks(
     limit: int = DEFAULT_LIMIT,
 ) -> list[dict[str, Any]]:
     """Search local chunks and return ranked evidence blocks."""
-    query_tokens = tokenize(query)
+    from packages.retrieval.bilingual import expand_query_text
+
+    expanded_query = expand_query_text(query)
+    query_tokens = tokenize(expanded_query)
     if not query.strip() or not query_tokens:
         return []
 
@@ -220,7 +262,9 @@ def search_chunks(
         if score <= 0:
             continue
 
-        scored_results.append(build_retrieval_result(chunk, score=score))
+        result = build_retrieval_result(chunk, score=score)
+        result["query_expansion"] = expanded_query
+        scored_results.append(result)
 
     scored_results.sort(key=lambda item: item["score"], reverse=True)
     return scored_results[: max(limit, 0)]
