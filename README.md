@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo/sanjuan-ai-logo.svg" alt="SanJuan AI logo" width="640" />
+</p>
+
 # SanJuan AI KI
 
 ![Beta](https://img.shields.io/badge/status-public%20beta%20prep-61e4c5)
@@ -54,21 +58,21 @@ For sensitive topics such as permits, taxes, health, legal/court information, im
 
 ## Screenshots and demo media
 
-Public beta visual assets are being prepared.
-
 | Asset | Status |
 | --- | --- |
-| Project logo | Placeholder ready |
-| Architecture diagram | Placeholder ready |
+| Project logo | Added: `assets/logo/sanjuan-ai-logo.svg` |
+| Favicon/icon | Added: `assets/logo/sanjuan-ai-icon.svg` and `apps/web/public/favicon.svg` |
+| Architecture diagram | Added: `docs/ARCHITECTURE_OVERVIEW.md` |
 | Web app screenshot | To be captured before beta invite |
 | `/ask` demo GIF | To be captured before beta invite |
 | Source status dashboard screenshot | To be captured before beta invite |
 
-Suggested paths:
+Visual asset paths:
 
 ```txt
 assets/logo/sanjuan-ai-logo.svg
-assets/diagrams/architecture.md
+assets/logo/sanjuan-ai-icon.svg
+apps/web/public/favicon.svg
 assets/screenshots/README.md
 assets/demo/README.md
 ```
@@ -95,7 +99,7 @@ Structured /ask Answer
 Next.js Web App
 ```
 
-Read the architecture placeholder: [`docs/ARCHITECTURE_OVERVIEW.md`](docs/ARCHITECTURE_OVERVIEW.md)
+Read the architecture overview: [`docs/ARCHITECTURE_OVERVIEW.md`](docs/ARCHITECTURE_OVERVIEW.md)
 
 ---
 
