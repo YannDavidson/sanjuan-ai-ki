@@ -49,6 +49,29 @@ class IngestionStatus(BaseModel):
     vectors_dir: str = "data/documents/vectors"
 
 
+class RelatedAgency(BaseModel):
+    """Agency inferred from retrieved source metadata."""
+
+    source_id: str
+    name: str
+    category: str | None = None
+    url: HttpUrl | None = None
+    trust_level: str | None = None
+
+
+class StructuredAnswer(BaseModel):
+    """User-facing structured answer for /ask."""
+
+    direct_answer: str
+    steps_to_follow: list[str] = Field(default_factory=list)
+    requirements: list[str] = Field(default_factory=list)
+    official_citations: list[Citation] = Field(default_factory=list)
+    last_updated: str | None = None
+    confidence: ConfidenceLevel = Field(default="placeholder")
+    related_agencies: list[RelatedAgency] = Field(default_factory=list)
+    official_source_warning: str | None = None
+
+
 class AskAnswer(BaseModel):
     """Citation-first response contract for /ask."""
 
@@ -59,3 +82,4 @@ class AskAnswer(BaseModel):
     sources: list[AnswerSource] = Field(default_factory=list)
     safety_note: str | None = None
     ingestion_status: IngestionStatus | None = None
+    structured_answer: StructuredAnswer | None = None
