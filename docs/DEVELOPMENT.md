@@ -36,6 +36,7 @@ The tests intentionally avoid external network access. They check:
 - FastAPI `/health`
 - FastAPI `/sources`
 - FastAPI `/ask` response contract
+- FastAPI `/ask` structured answer contract
 - keyword retrieval against committed demo corpus fixtures
 - local vector-store generation from fixture chunks
 - hybrid retrieval over fixture chunks + generated fixture vectors
@@ -88,6 +89,21 @@ SANJUAN_ASK_RATE_LIMIT_PER_MINUTE=30
 Successful `/ask` responses include `X-RateLimit-Limit` and `X-RateLimit-Remaining`. If the limit is exceeded, `/ask` returns HTTP `429` with `Retry-After`.
 
 This limiter is useful for local demos and a single-process deployment. It is not enough by itself for scaled production. Read `docs/API_ABUSE_PROTECTION.md` before public exposure.
+
+### Structured `/ask` answers
+
+The `/ask` endpoint returns both a backward-compatible `answer` string and a `structured_answer` object with:
+
+- direct answer
+- steps to follow
+- requirements
+- official citations
+- last updated date
+- confidence score
+- related agencies
+- official-source warning
+
+Read `docs/ASK_ANSWER_FORMAT.md` before changing the response contract.
 
 ## Web app
 
