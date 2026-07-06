@@ -17,7 +17,8 @@ Use this checklist before inviting external testers to SanJuan AI.
 - [x] License
 - [ ] Screenshots captured and committed
 - [ ] Demo GIF captured and committed
-- [ ] Logo asset finalized and committed
+- [x] Logo asset finalized and committed
+- [x] Favicon/icon asset committed
 
 ## Engineering readiness
 
@@ -43,13 +44,13 @@ Use this checklist before inviting external testers to SanJuan AI.
 
 ## Beta tester experience
 
-- [ ] Example questions listed in README
-- [ ] Feedback instructions visible
-- [ ] Bug-report issue template added
-- [ ] New-source issue template added
-- [ ] Contribution instructions clear
-- [ ] Known limitations visible
-- [ ] Sensitive-topic disclaimer visible
+- [x] Example questions listed in README
+- [x] Feedback instructions visible through GitHub issue templates
+- [x] Bug-report issue template added
+- [x] New-source issue template added
+- [x] Contribution instructions clear
+- [x] Known limitations visible
+- [x] Sensitive-topic disclaimer visible
 
 ## Suggested beta invitation wording
 
