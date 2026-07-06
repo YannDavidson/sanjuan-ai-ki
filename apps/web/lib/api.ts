@@ -20,6 +20,25 @@ export type AnswerSource = {
   trust_level: string;
 };
 
+export type RelatedAgency = {
+  source_id: string;
+  name: string;
+  category?: string | null;
+  url?: string | null;
+  trust_level?: string | null;
+};
+
+export type StructuredAnswer = {
+  direct_answer: string;
+  steps_to_follow: string[];
+  requirements: string[];
+  official_citations: Citation[];
+  last_updated?: string | null;
+  confidence: string;
+  related_agencies: RelatedAgency[];
+  official_source_warning?: string | null;
+};
+
 export type IngestionStatus = {
   ready_for_keyword_retrieval: boolean;
   ready_for_vector_retrieval: boolean;
@@ -42,6 +61,7 @@ export type AskResponse = {
   sources: AnswerSource[];
   safety_note?: string | null;
   ingestion_status?: IngestionStatus | null;
+  structured_answer?: StructuredAnswer | null;
 };
 
 export type AskRequest = {
@@ -59,7 +79,8 @@ export class SanJuanApiError extends Error {
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
 
 export function getApiBaseUrl() {
-  return (process.env.NEXT_PUBLIC_SANJUAN_API_URL || DEFAULT_API_BASE_URL).replace(/\/$/, "");
+  const configured = process.env.NEXT_PUBLIC_SANJUAN_API_URL || DEFAULT_API_BASE_URL;
+  return configured.endsWith("/") ? configured.slice(0, -1) : configured;
 }
 
 export async function askSanJuanAI(payload: AskRequest): Promise<AskResponse> {
@@ -69,7 +90,8 @@ export async function askSanJuanAI(payload: AskRequest): Promise<AskResponse> {
     throw new SanJuanApiError("Please enter a question before asking SanJuan AI.");
   }
 
-  const response = await fetch(`${getApiBaseUrl()}/ask`, {
+  const apiBaseUrl = getApiBaseUrl();
+  const response = await fetch(apiBaseUrl + "/ask", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
