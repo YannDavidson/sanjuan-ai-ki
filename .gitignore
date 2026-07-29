@@ -1,0 +1,69 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+env/
+
+# Node / Next.js
+node_modules/
+apps/web/node_modules/
+.next/
+apps/web/.next/
+out/
+dist/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Generated corpus and runtime artifacts
+data/documents/raw/*.json
+data/documents/chunks/*.json
+data/documents/vectors/*.json
+data/status/*.json
+!data/documents/raw/.gitkeep
+!data/documents/chunks/.gitkeep
+!data/documents/vectors/.gitkeep
+!data/status/.gitkeep
+
+# Local databases and caches
+*.db
+*.sqlite
+*.sqlite3
+.cache/
+
+# IDE and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build and deployment artifacts
+.vercel/
+.render/
+
+# Temporary files
+.tmp/
+tmp/
+*.tmp
+*.log
