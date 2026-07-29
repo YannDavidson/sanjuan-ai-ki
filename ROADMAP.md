@@ -1,66 +1,76 @@
 # SanJuan AI Roadmap
 
-This roadmap describes the path from MVP to public beta and beyond.
+This roadmap describes the path from the current MVP to public beta and production-grade civic intelligence.
 
-## Current status
-
-SanJuan AI has a working technical foundation:
+## Current foundation
 
 - FastAPI backend
 - Next.js frontend
 - Source registry
-- Ingestion pipeline
-- Bounded crawler
-- Agency-specific loader profiles
-- Chunking
-- Keyword retrieval
-- Local vector-search scaffold
+- Homepage ingestion, bounded crawling, and agency loaders
+- robots.txt checks and polite crawl delays
+- JSON document/chunk/vector storage
+- Keyword and local vector retrieval
 - Hybrid retrieval
-- Spanish-first bilingual retrieval
-- Structured `/ask` answers
+- Spanish-first bilingual expansion
+- Structured extractive `/ask` answers
 - Source status dashboard
 - Smoke tests and CI
+- Deployment configuration
 
 ## v1.0.0-beta preparation
 
-Goal: make the repository easy to understand, run, test, and contribute to.
-
 - [x] Public beta checklist
 - [x] Professional README
-- [x] Contributing guide
-- [x] Security policy
-- [x] Code of conduct
-- [x] Known limitations
-- [x] Changelog
-- [x] Supported versions policy
+- [x] Community, security, and contribution policies
+- [x] Known limitations and changelog
+- [x] Architecture documentation aligned with current code
+- [x] `.gitignore`
+- [x] robots.txt and crawl-delay support
+- [x] Production CORS configuration path
+- [x] Vercel `/sources` hardening
+- [x] Documentation drift cleanup
+- [x] Logo and favicon assets
 - [ ] Screenshots
 - [ ] Demo GIF
-- [ ] Final logo asset
-- [ ] Fresh clone test
-- [ ] CI green on latest commit
+- [ ] Fresh-clone test
+- [ ] CI green on latest release candidate
+- [ ] Build and evaluate the first real corpus
+
+## Answer-generation strategy
+
+The current extractive, no-LLM answer builder is an intentional first stage, not the final destination.
+
+It provides a deterministic safety baseline while the corpus, citations, freshness signals, and evaluation suite mature.
+
+The next intelligence milestone is **citation-aware LLM synthesis**. Any future model must:
+
+- answer only from retrieved evidence
+- preserve direct citations
+- avoid unsupported requirements, fees, deadlines, and procedures
+- fall back safely when evidence is insufficient
+- apply stricter controls to high-risk topics
 
 ## Phase 2 — Intelligence
 
-After beta polish, focus on answer quality and reasoning.
-
 1. Citation-aware answer synthesis
-2. Agency-specific reasoning
-3. Conversation memory
-4. Multi-source evidence fusion
-5. Source quality scoring
-6. Temporal reasoning for stale/current information
-7. PDF and form ingestion
+2. Multi-source evidence fusion
+3. Agency-specific reasoning
+4. Source quality scoring
+5. Temporal reasoning for current vs. outdated guidance
+6. Conversation memory with cited context
+7. PDF, form, and table ingestion
 8. Government service workflow guidance
 
 ## Phase 3 — Public usefulness
 
 - Better Spanish-first UX
+- Answer feedback and correction workflow
 - Source request workflow
 - Admin dashboard
-- Public feedback loop
-- Deployment hardening
 - Scheduled ingestion refresh
-- Better source freshness alerts
+- Source freshness alerts
+- Production storage and distributed rate limiting
 
 ## Phase 4 — Puerto Rico expansion
 
@@ -74,9 +84,7 @@ After beta polish, focus on answer quality and reasoning.
 
 ## Long-term vision
 
-SanJuan AI can become the first deployment of a broader Puerto Rico/Caribbean civic intelligence network:
-
-- SanJuan AI — city/metro assistant
+- SanJuan AI — city and metro assistant
 - Puerto Rico AI — island-wide assistant
 - Caribbean AI — regional knowledge platform
 - Local AI Framework — reusable civic intelligence infrastructure
