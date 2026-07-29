@@ -1,22 +1,40 @@
 # SanJuan AI Web
 
-Next.js MVP web app for SanJuan AI.
+Next.js web app for the SanJuan AI public beta.
 
-## What is included
+## Routes
 
-- `/` — landing page for the SanJuan AI vision
-- `/ask` — citation-first assistant UI connected to the FastAPI backend
-- `/sources` — filterable source registry directory
+- `/` — landing page
+- `/ask` — structured citation-first assistant UI
+- `/sources` — filterable source registry
+- `/status` — source/corpus status dashboard
 
-The source directory currently reads from:
+## Current capabilities
+
+The web app currently supports:
+
+- English and Spanish question selection
+- Hybrid retrieval responses from the FastAPI backend
+- Direct answers, steps, requirements, confidence, and warnings
+- Citation cards
+- Related agency cards
+- Corpus readiness indicators
+- Source registry filters
+- Source status visibility
+
+## Source registry
+
+The `/sources` page reads:
 
 ```txt
 data/sources/pr_sources.yml
 ```
 
+`next.config.ts` includes the registry in standalone output tracing. The loader also checks multiple runtime paths and returns an empty state instead of crashing if the file is unavailable.
+
 ## Run locally
 
-First, start the backend from the repo root:
+Start the backend from the repository root:
 
 ```bash
 pip install -r requirements.txt
@@ -31,7 +49,7 @@ npm install
 npm run dev
 ```
 
-Then open:
+Open:
 
 ```txt
 http://localhost:3000
@@ -39,30 +57,24 @@ http://localhost:3000
 
 ## API configuration
 
-The `/ask` page calls the FastAPI backend using this environment variable:
-
 ```bash
 NEXT_PUBLIC_SANJUAN_API_URL=http://127.0.0.1:8000
 ```
 
-If the variable is not set, the app defaults to:
+For production, set this to the deployed API URL and configure the API's `SANJUAN_CORS_ORIGINS` to include the deployed web origin.
 
-```txt
-http://127.0.0.1:8000
+## Build validation
+
+```bash
+npm run build
 ```
 
-## Design principles
+After deployment, verify `/ask`, `/sources`, and `/status`.
 
-- Modern Caribbean intelligence
-- Clean civic-tech feel
-- Dark mode first
-- Bilingual-ready copy
-- Citation-first answer UX
-- Official source trust is visible in the interface
+## Next improvements
 
-## Next steps
-
-1. Replace the `/ask` placeholder backend answer with retrieval results.
-2. Show real citations once source chunking and search are implemented.
-3. Add Spanish UI copy and language toggle.
-4. Add deployment configuration.
+- Capture public beta screenshots and demo GIFs
+- Improve Spanish-first UI copy
+- Add a clearer empty state when the source registry is unavailable
+- Add feedback controls for incorrect answers
+- Add conversation history after the citation-aware synthesis layer is ready
