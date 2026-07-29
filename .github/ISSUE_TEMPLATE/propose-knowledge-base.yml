@@ -1,0 +1,53 @@
+name: Propose a Knowledge Base
+description: Propose a new contributor-maintained subject area for SanJuan KI.
+title: "[Knowledge Base]: "
+labels: ["community", "knowledge-graph"]
+body:
+  - type: input
+    id: title
+    attributes:
+      label: Knowledge Base title
+      placeholder: Puerto Rico Education Knowledge Base
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and public value
+      description: What information should this Knowledge Base cover, and who would use it?
+    validations:
+      required: true
+  - type: input
+    id: geography
+    attributes:
+      label: Geography
+      placeholder: Puerto Rico, San Juan, or a municipality
+    validations:
+      required: true
+  - type: input
+    id: languages
+    attributes:
+      label: Languages
+      placeholder: Spanish and English
+    validations:
+      required: true
+  - type: textarea
+    id: starter-sources
+    attributes:
+      label: Starter official sources
+      description: List at least one authoritative public source when the subject involves sensitive information.
+    validations:
+      required: true
+  - type: textarea
+    id: maintainers
+    attributes:
+      label: Proposed contributors or maintainers
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Proposal checks
+      options:
+        - label: The proposed scope is distinct from existing Knowledge Bases.
+          required: true
+        - label: I understand that submitted content requires review before publication.
+          required: true
