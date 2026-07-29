@@ -1,22 +1,134 @@
 # Contributing to SanJuan AI KI
 
-Thank you for your interest in contributing to SanJuan AI.
+Thank you for helping build **SanJuan Knowledge Infrastructure**, an open, bilingual, citation-first civic knowledge project for Puerto Rico.
 
-SanJuan AI is a bilingual, citation-first civic intelligence project for Puerto Rico. Contributions should improve trust, clarity, safety, source quality, or usability.
+Contributors do not need to understand graph databases, embeddings, or AI systems. You can contribute by finding official sources, documenting public services, reviewing local context, correcting stale information, or maintaining a subject-specific Knowledge Base.
 
 ## Ways to contribute
 
-Good first contributions include:
+- **Contribute a Source** — propose an official page, form, PDF, dataset, feed, or recognized institutional resource.
+- **Create a Knowledge Page** — add or improve an agency, service, topic, or location page with citations.
+- **Join a Knowledge Base** — help maintain business, transportation, health, emergency, municipal, tourism, or another approved subject area.
+- **Review Outdated Knowledge** — report broken links, renamed agencies, changed procedures, or stale citations.
+- Improve English/Spanish terminology, documentation, tests, loaders, UI, screenshots, and deployment guidance.
 
-- Verifying official Puerto Rico sources
-- Suggesting new sources
-- Improving English/Spanish glossary terms
-- Improving documentation
-- Adding tests
-- Improving agency-specific loaders
-- Capturing screenshots or demo GIFs
-- Reporting confusing or unsafe answers
-- Improving the web UI
+Use the GitHub issue forms when you are not ready to open a pull request.
+
+## SanJuan KI terminology
+
+- **SanJuan KI** is the complete Knowledge Infrastructure: sources, ingestion, Knowledge Bases, Knowledge Graph, retrieval, API, and public assistant.
+- A **Knowledge Base** is a contributor-facing subject collection with defined scope, sources, maintainers, and review rules.
+- The **SanJuan Knowledge Graph** is the technical relationship layer connecting agencies, services, topics, locations, and citations.
+
+## Contributor roles
+
+- **Source Contributor:** finds and documents public sources.
+- **Knowledge Editor:** creates or improves cited knowledge pages.
+- **Regional Reviewer:** verifies Puerto Rico-specific language and local context.
+- **Domain Reviewer:** reviews a field such as health, taxes, transportation, or emergency information.
+- **Maintainer:** approves publication and keeps a Knowledge Base current.
+
+Roles describe responsibility, not hierarchy. New contributors may begin with a single source or correction.
+
+## Submission-to-publication workflow
+
+1. Submit an issue or focused pull request.
+2. Automated checks validate metadata, IDs, citations, and relationships.
+3. A reviewer confirms provenance and assigns the correct trust level.
+4. Sensitive claims are checked against official evidence.
+5. The contribution remains `proposed` or `submitted` until approved.
+6. A maintainer merges the contribution and marks it active or published.
+7. The Knowledge Graph compiler makes approved content available to retrieval systems.
+8. Git history and source URLs preserve the evidence trail.
+
+Never mark your own contribution as human-reviewed or published unless you are an authorized maintainer performing that review.
+
+## Knowledge Base contributions
+
+Knowledge Base definitions live under:
+
+```txt
+knowledge/bases/<knowledge-base>/knowledge-base.yml
+```
+
+Start from:
+
+```txt
+knowledge/bases/_template/knowledge-base.yml
+```
+
+Every Knowledge Base must declare:
+
+- stable ID beginning with `kb-`
+- title and description
+- geography and languages
+- covered topics
+- maintainers
+- review status
+- whether it includes sensitive topics
+- source policy
+- labeled sources
+
+Validate all Knowledge Bases with:
+
+```bash
+python -m packages.knowledge.knowledge_base --pretty
+```
+
+## Source contributions
+
+When adding a source, include:
+
+- source name and public URL
+- owning agency or institution
+- related Knowledge Base
+- geography and language
+- trust level: `official`, `institutional`, `community`, or `unverified`
+- source type and update frequency, when known
+- what the source contains
+- when and how provenance was verified
+- whether it supports sensitive claims
+
+Prefer official Puerto Rico government or public-authority sources. Institutional and community sources must remain clearly labeled.
+
+## Knowledge-page contributions
+
+Use:
+
+```txt
+knowledge/_templates/knowledge-page-contribution.md
+```
+
+Every factual or procedural claim must be traceable to a listed source. Missing requirements, fees, deadlines, forms, eligibility rules, and procedures should be placed under **What is not yet verified** rather than guessed.
+
+## Review and trust states
+
+Knowledge Base states:
+
+- `proposed`
+- `active`
+- `needs_review`
+- `archived`
+
+Knowledge Graph pages may additionally use submission and publication review states defined by the graph schema.
+
+Trust level describes the source, while review status describes the contribution. They are not interchangeable.
+
+## Safety rules
+
+Do not add unsupported:
+
+- legal or immigration guidance
+- tax requirements
+- medical advice
+- permit or licensing requirements
+- emergency instructions
+- public-benefit eligibility
+- fees, deadlines, office hours, forms, or procedures
+
+For sensitive topics, SanJuan KI must cite current official sources and admit uncertainty when evidence is missing.
+
+Do not commit private data, credentials, personal case information, paywalled material, or content you do not have permission to redistribute.
 
 ## Local setup
 
@@ -48,53 +160,24 @@ npm run build
 2. Keep changes focused.
 3. Add or update tests when behavior changes.
 4. Update documentation when commands, schemas, or workflows change.
-5. Run tests before opening a pull request.
-
-## Source contributions
-
-When adding a new public source, include:
-
-- Source name
-- URL
-- Category
-- Geography
-- Language
-- Trust level
-- Source type
-- Update frequency, if known
-- Notes explaining why the source matters
-
-Prefer official Puerto Rico government or institutional sources when possible.
-
-## Safety rules
-
-Do not add behavior that invents:
-
-- legal guidance
-- tax requirements
-- medical advice
-- permit requirements
-- emergency instructions
-- immigration guidance
-- public benefit eligibility
-- fees, deadlines, office hours, or forms without source evidence
-
-For sensitive topics, SanJuan AI should cite official sources and admit uncertainty when evidence is missing.
+5. Run tests and validators before opening a pull request.
 
 ## Pull request checklist
 
-Before opening a PR:
-
 - [ ] `pytest -q` passes
+- [ ] `python -m packages.knowledge.knowledge_base --pretty` passes when Knowledge Bases change
+- [ ] `python -m packages.knowledge.validate_graph --pretty` passes when graph pages change
 - [ ] `npm run build` passes in `apps/web` when frontend code changes
+- [ ] Every factual claim is traceable to a public source
+- [ ] Source trust levels are accurate
+- [ ] Sensitive-topic claims use official evidence
+- [ ] Review status does not overstate approval
 - [ ] Docs are updated when needed
-- [ ] No secrets or private data are committed
-- [ ] New sources are public and citation-friendly
-- [ ] Sensitive-topic behavior remains safe
+- [ ] No secrets, private data, or generated corpus artifacts are committed
 
 ## Code style
 
-The project currently prioritizes simple, readable Python and TypeScript. Keep modules small, explicit, and easy to test.
+Keep Python, TypeScript, YAML, and Markdown simple, explicit, and easy for another contributor to review.
 
 ## Questions
 
