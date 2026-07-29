@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: repositoryRoot,
   outputFileTracingIncludes: {
-    "/sources": [path.join(repositoryRoot, "data/sources/pr_sources.yml")],
+    "/sources": ["../../data/sources/pr_sources.yml"],
   },
 };
 
