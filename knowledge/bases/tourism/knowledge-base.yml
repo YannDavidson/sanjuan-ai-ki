@@ -1,0 +1,18 @@
+id: kb-tourism
+title: Puerto Rico Tourism Knowledge Base
+description: Official and recognized institutional information about destinations, attractions, visitor services, culture, transportation, and responsible tourism in Puerto Rico.
+geography: [puerto_rico, san_juan]
+languages: [es, en]
+topics: [tourism, attractions, culture, visitor_services, travel]
+maintainers: [YannDavidson]
+review_status: active
+sensitive_topics: false
+source_policy: Prefer official tourism and government sources. Institutional sources may add context when provenance and update dates are clear.
+sources:
+  - id: discover-puerto-rico
+    name: Discover Puerto Rico
+    url: https://www.discoverpuertorico.com/
+    trust_level: institutional
+    source_type: website
+    language: en
+    notes: Recognized destination marketing and visitor-information resource.
