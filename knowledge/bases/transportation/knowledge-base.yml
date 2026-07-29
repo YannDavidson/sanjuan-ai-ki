@@ -1,0 +1,18 @@
+id: kb-transportation
+title: Puerto Rico Transportation Knowledge Base
+description: Official transportation, driver licensing, road, vehicle, transit, and mobility information for Puerto Rico.
+geography: [puerto_rico]
+languages: [es, en]
+topics: [driver_licenses, vehicles, roads, transit, mobility]
+maintainers: [YannDavidson]
+review_status: active
+sensitive_topics: true
+source_policy: Use DTOP, CESCO, municipal, and other official transportation sources for requirements, appointments, fees, forms, and deadlines.
+sources:
+  - id: pr-dtop
+    name: Departamento de Transportación y Obras Públicas
+    url: https://www.dtop.pr.gov/
+    trust_level: official
+    source_type: website
+    language: es
+    notes: Primary Puerto Rico transportation authority.
