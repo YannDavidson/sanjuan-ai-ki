@@ -1,0 +1,18 @@
+id: kb-public-health
+title: Puerto Rico Public Health Knowledge Base
+description: Official public health programs, agency services, alerts, facilities, and health-information resources for Puerto Rico.
+geography: [puerto_rico]
+languages: [es, en]
+topics: [public_health, health_programs, facilities, alerts]
+maintainers: [YannDavidson]
+review_status: active
+sensitive_topics: true
+source_policy: Medical and public-health claims must come from official health authorities. Community sources may only support navigation or local context.
+sources:
+  - id: pr-salud
+    name: Departamento de Salud de Puerto Rico
+    url: https://www.salud.pr.gov/
+    trust_level: official
+    source_type: website
+    language: es
+    notes: Primary official public-health source for Puerto Rico.
