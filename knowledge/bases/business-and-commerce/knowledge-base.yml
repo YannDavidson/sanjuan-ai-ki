@@ -1,0 +1,25 @@
+id: kb-business-and-commerce
+title: Puerto Rico Business and Commerce Knowledge Base
+description: Official information about business formation, merchant registration, incentives, permits, and public entrepreneurship resources in Puerto Rico.
+geography: [puerto_rico]
+languages: [es, en]
+topics: [business_registration, merchant_registration, permits, incentives, entrepreneurship]
+maintainers: [YannDavidson]
+review_status: active
+sensitive_topics: true
+source_policy: Use official agency sources for requirements, fees, deadlines, forms, eligibility, and legal or tax claims. Institutional sources may provide context only.
+sources:
+  - id: pr-estado
+    name: Departamento de Estado de Puerto Rico
+    url: https://www.estado.pr.gov/
+    trust_level: official
+    source_type: website
+    language: es
+    notes: Corporate registrations and official business records.
+  - id: pr-hacienda
+    name: Departamento de Hacienda de Puerto Rico
+    url: https://hacienda.pr.gov/
+    trust_level: official
+    source_type: website
+    language: es
+    notes: Taxpayer and merchant information.
