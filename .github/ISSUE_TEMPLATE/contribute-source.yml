@@ -1,0 +1,60 @@
+name: Contribute a source
+description: Propose an official or related Puerto Rico knowledge source for SanJuan KI.
+title: "[Source]: "
+labels: ["community", "source-request"]
+body:
+  - type: dropdown
+    id: knowledge-base
+    attributes:
+      label: Knowledge Base
+      options:
+        - Business and Commerce
+        - Transportation
+        - Public Health
+        - Emergency Information
+        - Municipal Services
+        - Tourism
+        - New or unsure
+    validations:
+      required: true
+  - type: input
+    id: source-name
+    attributes:
+      label: Source name
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Public URL
+      placeholder: https://...
+    validations:
+      required: true
+  - type: dropdown
+    id: trust
+    attributes:
+      label: Proposed trust level
+      options: [Official, Institutional, Community, Unverified]
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Provenance and value
+      description: Who owns this source, what does it contain, and why should SanJuan KI include it?
+    validations:
+      required: true
+  - type: textarea
+    id: sensitive
+    attributes:
+      label: Sensitive claims
+      description: Does this source support legal, tax, health, permit, emergency, eligibility, fee, deadline, or form information?
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Contributor checks
+      options:
+        - label: I confirmed this is a public source.
+          required: true
+        - label: I have not included private, copyrighted, or confidential material.
+          required: true
