@@ -6,7 +6,7 @@ Use this checklist before inviting external testers to SanJuan AI.
 
 - [x] Polished README with quick start
 - [x] Project badges
-- [x] Architecture overview placeholder
+- [x] Current architecture clearly separated from future architecture
 - [x] Roadmap
 - [x] Known limitations
 - [x] Changelog
@@ -15,6 +15,7 @@ Use this checklist before inviting external testers to SanJuan AI.
 - [x] Security policy
 - [x] Supported versions policy
 - [x] License
+- [x] Comprehensive `.gitignore`
 - [ ] Screenshots captured and committed
 - [ ] Demo GIF captured and committed
 - [x] Logo asset finalized and committed
@@ -27,9 +28,22 @@ Use this checklist before inviting external testers to SanJuan AI.
 - [ ] `npm run build` passes in `apps/web`
 - [ ] `/health` returns `status: ok`
 - [ ] `/ask` returns structured answers
-- [ ] `/sources` loads the source registry
+- [ ] `/sources` loads the source registry in the deployed web build
 - [ ] `/status` loads source health data or a helpful fallback
+- [x] Production CORS variable declared in `render.yaml`
+- [x] Vercel/standalone source registry tracing configured
+- [x] Source loader fails safely if the registry is unavailable
 - [ ] Deployment docs verified on a clean environment
+
+## Crawler readiness
+
+- [x] Same-domain restriction
+- [x] Allowed and blocked path controls
+- [x] Per-source page caps
+- [x] robots.txt checks
+- [x] Polite request delay
+- [x] Network-free crawl policy tests
+- [ ] Low-page-cap live crawl reviewed before public scheduling
 
 ## Data readiness
 
@@ -51,6 +65,7 @@ Use this checklist before inviting external testers to SanJuan AI.
 - [x] Contribution instructions clear
 - [x] Known limitations visible
 - [x] Sensitive-topic disclaimer visible
+- [x] Extractive MVP and future LLM direction documented
 
 ## Suggested beta invitation wording
 
@@ -61,5 +76,5 @@ Use this checklist before inviting external testers to SanJuan AI.
 - CI is green.
 - README quick start has been tested on a fresh clone.
 - At least one screenshot or demo GIF is available.
-- Known limitations are visible.
-- Sensitive-topic disclaimers are visible.
+- The first real corpus has been built and reviewed.
+- Known limitations and sensitive-topic disclaimers remain visible.
