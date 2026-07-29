@@ -1,0 +1,18 @@
+knowledge_base_id: kb-example
+contributor:
+  github_username: your-username
+  role: source_contributor
+source:
+  id: stable-source-id
+  name: Official source name
+  url: https://example.pr.gov/
+  trust_level: official
+  source_type: website
+  language: es
+  update_frequency: unknown
+  notes: Explain what the source contains and why it belongs in this Knowledge Base.
+verification:
+  accessed_at: YYYY-MM-DD
+  official_owner: Name of agency or institution
+  supports_sensitive_claims: false
+  evidence_notes: Describe how you confirmed provenance and authority.
