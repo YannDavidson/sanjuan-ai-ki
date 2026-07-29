@@ -18,12 +18,7 @@ LanguageCode = Literal["en", "es", "en-es", "multi"]
 
 
 class CrawlRules(BaseModel):
-    """Bounded crawl settings for one source.
-
-    Crawling is opt-in per source. The defaults are intentionally conservative:
-    no crawling unless enabled, a small page cap, no allow-list by default, and
-    common noisy or unsafe paths blocked.
-    """
+    """Bounded and polite crawl settings for one source."""
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
@@ -31,6 +26,8 @@ class CrawlRules(BaseModel):
     max_pages_per_source: int = Field(default=1, ge=1, le=100)
     allowed_paths: list[str] = Field(default_factory=list)
     blocked_paths: list[str] = Field(default_factory=list)
+    respect_robots_txt: bool = Field(default=True, description="Check robots.txt before fetching crawl pages.")
+    request_delay_seconds: float = Field(default=1.0, ge=0.0, le=60.0)
 
     @field_validator("allowed_paths", "blocked_paths")
     @classmethod
