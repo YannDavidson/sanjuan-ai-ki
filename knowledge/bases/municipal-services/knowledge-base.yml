@@ -1,0 +1,18 @@
+id: kb-municipal-services
+title: San Juan Municipal Services Knowledge Base
+description: Official municipal services, permits, offices, programs, notices, and resident resources for the Municipality of San Juan.
+geography: [san_juan, puerto_rico]
+languages: [es, en]
+topics: [municipal_services, permits, resident_services, notices, programs]
+maintainers: [YannDavidson]
+review_status: active
+sensitive_topics: true
+source_policy: Municipal procedures, fees, forms, deadlines, and office information must be supported by current official municipal sources.
+sources:
+  - id: municipio-san-juan
+    name: Municipio Autónomo de San Juan
+    url: https://sanjuan.pr/
+    trust_level: official
+    source_type: website
+    language: es
+    notes: Official municipal source for San Juan services and public notices.
