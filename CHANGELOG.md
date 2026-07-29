@@ -2,23 +2,32 @@
 
 All notable changes to SanJuan AI will be documented here.
 
-This project follows a lightweight changelog format during beta preparation.
-
 ## Unreleased
 
 ### Added
 
 - Public beta readiness checklist
 - Professional README
-- Contributing guide
-- Security policy
-- Code of conduct
-- Supported versions policy
-- Roadmap
-- Known limitations
-- MIT license
-- Architecture overview placeholder
-- Screenshot/demo asset placeholders
+- Community and contribution policies
+- Roadmap and known limitations
+- Architecture overview
+- Logo and favicon assets
+- Comprehensive `.gitignore`
+- robots.txt policy helper
+- configurable polite crawl delay
+- network-free crawl policy tests
+- production CORS declaration in `render.yaml`
+- Vercel/standalone source registry tracing
+- safe source-registry fallback in the web app
+
+### Changed
+
+- `docs/ARCHITECTURE.md` now distinguishes the current JSON-based MVP from the future Postgres/pgvector architecture.
+- Retrieval documentation now reflects implemented hybrid and bilingual retrieval.
+- Web documentation now reflects the working `/ask`, `/sources`, and `/status` pages.
+- Deployment documentation now explains production CORS and source registry tracing.
+- The roadmap now clarifies that extractive no-LLM answers are an intentional MVP stage before citation-aware LLM synthesis.
+- Removed the unused `SANJUAN_RETRIEVAL_MODE` example setting.
 
 ### Existing MVP foundation
 
@@ -35,8 +44,7 @@ This project follows a lightweight changelog format during beta preparation.
 - Hybrid retrieval
 - Spanish-first bilingual retrieval
 - Structured `/ask` answer contract
-- Local smoke tests
-- Retrieval fixture tests
+- Smoke and retrieval fixture tests
 - GitHub Actions CI
 - Deployment docs
 
@@ -44,7 +52,7 @@ This project follows a lightweight changelog format during beta preparation.
 
 - Final beta screenshots
 - Demo GIF
-- Logo/social preview assets
-- Fresh clone validation
+- Fresh-clone validation
+- Build and review the first real corpus
 - Green CI on release commit
 - Beta release notes
