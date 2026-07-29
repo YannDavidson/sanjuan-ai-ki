@@ -9,3 +9,11 @@ services:
     envVars:
       - key: SANJUAN_ENV
         value: production
+      - key: SANJUAN_CORS_ORIGINS
+        sync: false
+      - key: SANJUAN_CORS_ALLOW_CREDENTIALS
+        value: "false"
+      - key: SANJUAN_RATE_LIMIT_ENABLED
+        value: "true"
+      - key: SANJUAN_ASK_RATE_LIMIT_PER_MINUTE
+        value: "30"
