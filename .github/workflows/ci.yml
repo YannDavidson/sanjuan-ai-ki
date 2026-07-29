@@ -17,10 +17,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: "pip"
@@ -32,6 +32,9 @@ jobs:
 
       - name: Run smoke tests
         run: python -m pytest -q
+
+      - name: Validate Knowledge Bases
+        run: python -m packages.knowledge.knowledge_base --pretty
 
       - name: Validate refresh dry run
         run: python -m packages.ingestion.refresh_corpus --dry-run --pretty
@@ -46,12 +49,13 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
+          package-manager-cache: false
 
       - name: Install web dependencies
         run: npm install
