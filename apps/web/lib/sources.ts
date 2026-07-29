@@ -20,12 +20,29 @@ type SourceRegistry = {
   sources?: Source[];
 };
 
-export function getSources(): Source[] {
-  const sourcePath = path.join(process.cwd(), "..", "..", "data", "sources", "pr_sources.yml");
-  const file = fs.readFileSync(sourcePath, "utf8");
-  const registry = yaml.load(file) as SourceRegistry;
+function candidateRegistryPaths(): string[] {
+  return [
+    path.join(process.cwd(), "data", "sources", "pr_sources.yml"),
+    path.join(process.cwd(), "..", "..", "data", "sources", "pr_sources.yml"),
+    path.join(__dirname, "..", "..", "..", "..", "data", "sources", "pr_sources.yml"),
+  ];
+}
 
-  return registry.sources ?? [];
+export function getSources(): Source[] {
+  const sourcePath = candidateRegistryPaths().find((candidate) => fs.existsSync(candidate));
+  if (!sourcePath) {
+    console.warn("SanJuan AI source registry was not included in this build.");
+    return [];
+  }
+
+  try {
+    const file = fs.readFileSync(sourcePath, "utf8");
+    const registry = yaml.load(file) as SourceRegistry;
+    return registry.sources ?? [];
+  } catch (error) {
+    console.error("Could not load SanJuan AI source registry.", error);
+    return [];
+  }
 }
 
 export function uniqueValues(sources: Source[], key: keyof Source): string[] {
