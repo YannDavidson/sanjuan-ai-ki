@@ -1,0 +1,22 @@
+id: kb-example
+title: Example Puerto Rico Knowledge Base
+description: Describe the public-information area covered by this Knowledge Base.
+geography:
+  - puerto_rico
+languages:
+  - es
+  - en
+topics:
+  - example_topic
+maintainers: []
+review_status: proposed
+sensitive_topics: false
+source_policy: Prefer official Puerto Rico sources. Institutional and community sources must be clearly labeled and may not support sensitive claims without official evidence.
+sources:
+  - id: example-official-source
+    name: Example Official Source
+    url: https://example.pr.gov/
+    trust_level: official
+    source_type: website
+    language: es
+    notes: Explain what this source contributes.
