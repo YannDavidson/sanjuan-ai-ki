@@ -1,0 +1,18 @@
+id: kb-emergency-information
+title: Puerto Rico Emergency Information Knowledge Base
+description: Official emergency alerts, preparedness guidance, weather warnings, disaster response, and public-safety information for Puerto Rico.
+geography: [puerto_rico]
+languages: [es, en]
+topics: [emergencies, hurricanes, earthquakes, weather, preparedness, public_safety]
+maintainers: [YannDavidson]
+review_status: active
+sensitive_topics: true
+source_policy: Emergency instructions and alerts must come from current official government, weather, seismic, or emergency-management sources.
+sources:
+  - id: nws-san-juan
+    name: National Weather Service San Juan
+    url: https://www.weather.gov/sju/
+    trust_level: official
+    source_type: website
+    language: en
+    notes: Official weather forecasts, warnings, and preparedness information.
