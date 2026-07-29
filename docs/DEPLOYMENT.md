@@ -1,71 +1,47 @@
 # SanJuan AI Deployment
 
-This document describes the first deployment-ready setup for the SanJuan AI MVP.
+SanJuan AI currently has two deployable services:
 
-The project currently has two deployable services:
+1. FastAPI backend in `apps/api`
+2. Next.js frontend in `apps/web`
 
-1. **API service** — FastAPI backend in `apps/api`
-2. **Web service** — Next.js frontend in `apps/web`
-
-The backend and frontend can be deployed separately. The web app talks to the API through the `NEXT_PUBLIC_SANJUAN_API_URL` environment variable.
+The frontend calls the backend through `NEXT_PUBLIC_SANJUAN_API_URL`.
 
 ## Backend deployment
 
-### Production start command
-
-From the repository root:
+Start command:
 
 ```bash
 uvicorn apps.api.main:app --host 0.0.0.0 --port ${PORT:-8000}
 ```
 
-### Required files
+### Render setup
 
-- `requirements.txt`
-- `apps/api/main.py`
-- `render.yaml` for Render-style deployment
-- `Dockerfile.api` for container deployment
+`render.yaml` defines the API service and now declares the production CORS variable as a required dashboard value.
 
-### Render-style setup
-
-The included `render.yaml` defines a web service named `sanjuan-ai-api`.
-
-Default values:
-
-- Runtime: Python
-- Build command: `pip install -r requirements.txt`
-- Start command: `uvicorn apps.api.main:app --host 0.0.0.0 --port $PORT`
-- Health check path: `/health`
-
-### Backend environment variables
-
-Recommended production variables:
+Set:
 
 ```bash
 SANJUAN_ENV=production
 SANJUAN_API_VERSION=0.6.0
 SANJUAN_CORS_ORIGINS=https://your-web-domain.com
 SANJUAN_CORS_ALLOW_CREDENTIALS=false
-SANJUAN_RETRIEVAL_MODE=hybrid
 SANJUAN_RATE_LIMIT_ENABLED=true
 SANJUAN_ASK_RATE_LIMIT_PER_MINUTE=30
 ```
 
-Keep only one `SANJUAN_API_VERSION` value in production. The current MVP version is `0.6.0`.
+`SANJUAN_CORS_ORIGINS` is required for browser access from the deployed frontend. Use a comma-separated list if more than one origin is needed. Do not use `*` when credentials are enabled.
 
-`SANJUAN_CORS_ORIGINS` is a comma-separated list. In production, set it explicitly to the deployed web origin. In local development, the API defaults to:
+After deployment, `/health` should report:
 
-```bash
-http://localhost:3000,http://127.0.0.1:3000
+```txt
+status: ok
+cors_configured: true
 ```
 
-The API also adds conservative security headers, including `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`.
-
-`/ask` includes MVP in-memory rate limiting. This is useful for single-process demos, but public production traffic should also use an edge proxy, API gateway, or Redis-backed limiter. Read `docs/API_ABUSE_PROTECTION.md` before public exposure.
+The API also adds security headers and an MVP in-memory `/ask` rate limiter. Public traffic should eventually use edge, API-gateway, or Redis-backed protection.
 
 ## Web deployment
-
-### Production build
 
 From `apps/web`:
 
@@ -75,79 +51,46 @@ npm run build
 npm run start
 ```
 
-### Required environment variable
-
-```bash
-NEXT_PUBLIC_SANJUAN_API_URL=https://your-api-domain.com
-```
-
-For local development, this defaults to:
-
-```bash
-http://127.0.0.1:8000
-```
-
-### Vercel-style setup
-
-The included `apps/web/vercel.json` configures the Next.js app as the web project root.
-
-On Vercel, use:
-
-- Framework preset: Next.js
-- Root directory: `apps/web`
-- Build command: `npm run build`
-- Output: Next.js default
-
 Set:
 
 ```bash
 NEXT_PUBLIC_SANJUAN_API_URL=https://your-api-domain.com
 ```
 
-## Source refresh / scheduler
+### Vercel / standalone source registry
 
-The refresh pipeline is exposed through one command:
+The web app reads `data/sources/pr_sources.yml`. `apps/web/next.config.ts` now configures output-file tracing so the registry is included in standalone deployments.
+
+`apps/web/lib/sources.ts` also checks multiple runtime paths and returns a safe empty list instead of crashing if the registry is unavailable.
+
+After deployment, open `/sources` and verify that the registry appears. If it is empty, inspect the build output and root-directory settings.
+
+Recommended Vercel settings:
+
+- Framework: Next.js
+- Root directory: `apps/web`
+- Build command: `npm run build`
+- Environment: `NEXT_PUBLIC_SANJUAN_API_URL`
+
+## Corpus refresh
+
+Run the local refresh pipeline:
 
 ```bash
 python -m packages.ingestion.refresh_corpus --pretty
 ```
 
-This runs:
-
-1. batch source ingestion
-2. source status generation
-3. document chunking
-4. local vector build
-5. refresh summary artifact generation
-
-For scheduler planning without live fetching or writes:
+Dry-run validation:
 
 ```bash
 python -m packages.ingestion.refresh_corpus --dry-run --pretty
 ```
 
-The repository also includes `.github/workflows/refresh-dry-run.yml`, a scheduled/manual GitHub Actions workflow that validates the dry-run path daily without live fetching.
-
-Read `docs/SCHEDULER_PLAN.md` for hosted cron options and recommended cadence.
-
-## Container deployment
-
-Build the API container from the repository root:
-
-```bash
-docker build -f Dockerfile.api -t sanjuan-ai-api .
-docker run -p 8000:8000 sanjuan-ai-api
-```
-
-Then open:
-
-```txt
-http://127.0.0.1:8000/health
-```
+The current hosted API reads file-based corpus artifacts. Run ingestion/chunking/vector generation before deployment or provide persistent storage.
 
 ## Deployment checklist
 
-Before deploying:
+Before deployment:
 
 ```bash
 pip install -r requirements.txt
@@ -157,24 +100,20 @@ npm install
 npm run build
 ```
 
-After deploying:
+After deployment:
 
-1. Open `/health` on the API.
-2. Confirm the response includes `status: ok`.
-3. Confirm `cors_configured: true` in production.
-4. Confirm `rate_limit_enabled: true` unless intentionally disabled.
-5. Set `NEXT_PUBLIC_SANJUAN_API_URL` in the web app.
-6. Open `/ask` and submit a test question.
-7. Confirm `/ask` responses include `X-RateLimit-Limit` and `X-RateLimit-Remaining`.
-8. Open `/sources` and `/status`.
+1. Confirm API `/health` returns `status: ok`.
+2. Confirm `cors_configured: true`.
+3. Confirm the web app can call `/ask`.
+4. Confirm `/sources` renders without a server error.
+5. Confirm `/status` renders a dashboard or safe fallback.
+6. Verify citations open the intended official pages.
 
-## Current MVP limitation
+## Future production upgrade
 
-The production API currently reads local file-based corpus artifacts from the repository filesystem. For a real hosted deployment, run ingestion/chunking/vector generation before deployment or mount/persist generated artifacts.
-
-Recommended future upgrade:
-
-- Move documents/chunks/vectors into Postgres + pgvector or object storage.
-- Run source refresh through a scheduled worker/cron service.
-- Add an admin-only source refresh endpoint or queue-backed job trigger.
-- Move API rate limiting to edge/API-gateway/Redis-backed infrastructure.
+- Postgres + pgvector or managed vector storage
+- object storage for raw documents
+- scheduled ingestion workers
+- distributed rate limiting
+- stronger multilingual embeddings
+- citation-aware LLM synthesis
