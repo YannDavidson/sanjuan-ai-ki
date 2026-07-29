@@ -15,7 +15,13 @@ DEFAULT_BASES_PATH = REPO_ROOT / "knowledge" / "bases"
 
 KnowledgeBaseStatus = Literal["proposed", "active", "needs_review", "archived"]
 SourceTrust = Literal["official", "institutional", "community", "unverified"]
-ContributorRole = Literal["source_contributor", "knowledge_editor", "regional_reviewer", "domain_reviewer", "maintainer"]
+ContributorRole = Literal[
+    "source_contributor",
+    "knowledge_editor",
+    "regional_reviewer",
+    "domain_reviewer",
+    "maintainer",
+]
 
 
 class KnowledgeBaseSource(BaseModel):
@@ -33,7 +39,9 @@ class KnowledgeBaseSource(BaseModel):
     @classmethod
     def validate_id(cls, value: str) -> str:
         if not value.replace("-", "").replace("_", "").isalnum():
-            raise ValueError("source id may only contain letters, numbers, hyphens, and underscores")
+            raise ValueError(
+                "source id may only contain letters, numbers, hyphens, and underscores"
+            )
         return value
 
 
@@ -58,7 +66,9 @@ class KnowledgeBaseDefinition(BaseModel):
         if not value.startswith("kb-"):
             raise ValueError("Knowledge Base id must start with 'kb-'")
         if not value.replace("-", "").isalnum():
-            raise ValueError("Knowledge Base id may only contain letters, numbers, and hyphens")
+            raise ValueError(
+                "Knowledge Base id may only contain letters, numbers, and hyphens"
+            )
         return value
 
 
@@ -69,13 +79,27 @@ def load_knowledge_base(path: Path) -> KnowledgeBaseDefinition:
     return KnowledgeBaseDefinition.model_validate(data)
 
 
+def iter_knowledge_base_files(root: Path) -> list[Path]:
+    """Return publishable Knowledge Base definitions, excluding templates.
+
+    Directories whose names begin with an underscore are repository scaffolding
+    and must never be counted or compiled as real Knowledge Bases.
+    """
+
+    return sorted(
+        path
+        for path in root.glob("*/knowledge-base.yml")
+        if not path.parent.name.startswith("_")
+    )
+
+
 def validate_knowledge_bases(root: Path = DEFAULT_BASES_PATH) -> dict[str, object]:
     errors: list[str] = []
     bases: list[KnowledgeBaseDefinition] = []
     seen_base_ids: set[str] = set()
     seen_source_ids: set[str] = set()
 
-    for path in sorted(root.glob("*/knowledge-base.yml")):
+    for path in iter_knowledge_base_files(root):
         try:
             base = load_knowledge_base(path)
         except Exception as exc:  # validation command should report all failures
@@ -87,10 +111,16 @@ def validate_knowledge_bases(root: Path = DEFAULT_BASES_PATH) -> dict[str, objec
         seen_base_ids.add(base.id)
 
         if base.review_status == "active" and not base.maintainers:
-            errors.append(f"{base.id}: active Knowledge Bases require at least one maintainer")
+            errors.append(
+                f"{base.id}: active Knowledge Bases require at least one maintainer"
+            )
 
-        if base.sensitive_topics and not any(source.trust_level == "official" for source in base.sources):
-            errors.append(f"{base.id}: sensitive Knowledge Bases require at least one official source")
+        if base.sensitive_topics and not any(
+            source.trust_level == "official" for source in base.sources
+        ):
+            errors.append(
+                f"{base.id}: sensitive Knowledge Bases require at least one official source"
+            )
 
         for source in base.sources:
             scoped_id = f"{base.id}:{source.id}"
@@ -110,7 +140,9 @@ def validate_knowledge_bases(root: Path = DEFAULT_BASES_PATH) -> dict[str, objec
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate SanJuan KI community Knowledge Bases.")
+    parser = argparse.ArgumentParser(
+        description="Validate SanJuan KI community Knowledge Bases."
+    )
     parser.add_argument("--root", type=Path, default=DEFAULT_BASES_PATH)
     parser.add_argument("--pretty", action="store_true")
     args = parser.parse_args()
