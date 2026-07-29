@@ -1,0 +1,52 @@
+name: Create or improve a knowledge page
+description: Propose a cited agency, service, topic, or location page for SanJuan KI.
+title: "[Knowledge Page]: "
+labels: ["community", "knowledge-graph"]
+body:
+  - type: dropdown
+    id: page-type
+    attributes:
+      label: Page type
+      options: [Agency, Service, Topic, Location]
+    validations:
+      required: true
+  - type: input
+    id: title
+    attributes:
+      label: Proposed page title
+    validations:
+      required: true
+  - type: input
+    id: knowledge-base
+    attributes:
+      label: Related Knowledge Base
+      placeholder: kb-transportation
+    validations:
+      required: true
+  - type: textarea
+    id: content
+    attributes:
+      label: Knowledge to add or correct
+      description: Summarize the information in plain language. Do not guess missing requirements.
+    validations:
+      required: true
+  - type: textarea
+    id: citations
+    attributes:
+      label: Supporting source links
+      description: Provide a source URL for every factual or procedural claim.
+    validations:
+      required: true
+  - type: textarea
+    id: relationships
+    attributes:
+      label: Related agencies, services, topics, or locations
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Contributor checks
+      options:
+        - label: Every factual claim is traceable to a listed source.
+          required: true
+        - label: I clearly identified anything that is not yet verified.
+          required: true
