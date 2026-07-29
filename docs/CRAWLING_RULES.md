@@ -1,11 +1,11 @@
 # Bounded Source Crawling Rules
 
-SanJuan AI now supports safe, opt-in crawling for selected internal pages on registered sources.
+SanJuan AI supports safe, opt-in crawling for selected internal pages on registered sources.
 
-The original ingestion behavior remains the default: one homepage per source. Bounded crawling only runs when:
+Bounded crawling only runs when:
 
-1. The source has `crawl.enabled: true` in `data/sources/pr_sources.yml`.
-2. The batch ingestion command is run with `--crawl`.
+1. The source has `crawl.enabled: true`.
+2. Batch ingestion is run with `--crawl`, or an agency-specific loader is selected.
 
 ## Example source rule
 
@@ -13,6 +13,8 @@ The original ingestion behavior remains the default: one homepage per source. Bo
 crawl:
   enabled: true
   max_pages_per_source: 10
+  respect_robots_txt: true
+  request_delay_seconds: 1.0
   allowed_paths:
     - /servicios
     - /tramites
@@ -24,73 +26,58 @@ crawl:
     - /calendar
 ```
 
-## Safety behavior
+## Safety and politeness behavior
 
-The crawler is intentionally conservative.
+The crawler:
 
-It will:
+- checks `/robots.txt` before crawling when enabled
+- skips URLs disallowed by robots.txt
+- waits between page requests using `request_delay_seconds`
+- only follows same-domain links
+- removes fragments and query strings
+- blocks common noisy/authentication paths
+- respects page caps
+- follows configured allow-lists
+- skips common binary/static extensions
+- avoids duplicate URLs
+- preserves citation-ready source metadata
 
-- only crawl same-domain links
-- remove URL fragments
-- drop query strings to avoid search/filter/calendar loops
-- block common noisy paths like `/login`, `/admin`, `/search`, `/calendar`, `/api`, and `/wp-admin`
-- respect each source's `max_pages_per_source`
-- follow only `allowed_paths` when an allow-list is set
-- skip common binary/static file extensions
-- avoid duplicate URLs
-- preserve source metadata and citation-ready page URLs on every raw document
+Robots fetch failures are recorded in crawl summaries. The crawler currently fails open when robots.txt is unavailable because a temporary error should not be interpreted as a permanent prohibition; deployments that require fail-closed behavior can change that policy later.
 
-## Run homepage-only ingestion
+## Commands
+
+Homepage only:
 
 ```bash
 python -m packages.ingestion.batch_ingest_sources --pretty
 ```
 
-This is still the default and safest mode.
-
-## Run bounded crawling
-
-```bash
-python -m packages.ingestion.batch_ingest_sources --crawl --pretty
-```
-
-Use a smaller page cap while testing:
+Bounded crawl:
 
 ```bash
 python -m packages.ingestion.batch_ingest_sources --crawl --max-pages 3 --pretty
 ```
 
-## Crawl one source for debugging
+Agency loaders:
+
+```bash
+python -m packages.ingestion.batch_ingest_sources --agency-loaders --max-pages 3 --pretty
+```
+
+One source:
 
 ```bash
 python -m packages.ingestion.safe_crawler pr_gov_main --max-pages 3 --pretty
 ```
 
-## Recommended rules
+## Recommended production rules
 
-For high-value Puerto Rico government sources, keep `max_pages_per_source` between 5 and 10 until the source-specific loaders are more mature.
+- Keep page caps between 5 and 10 during beta.
+- Keep `respect_robots_txt: true`.
+- Use at least a one-second delay unless a source explicitly supports faster access.
+- Prefer public-service path allow-lists.
+- Do not crawl login, admin, search, calendar, or private paths.
 
-Prefer allow-lists for useful public-service paths:
+## Remaining limitations
 
-```yaml
-allowed_paths:
-  - /servicios
-  - /tramites
-  - /agencias
-  - /permisos
-  - /programas
-```
-
-Always block paths likely to create noise, authentication issues, or infinite loops:
-
-```yaml
-blocked_paths:
-  - /login
-  - /admin
-  - /search
-  - /calendar
-```
-
-## Current limitation
-
-This is not yet a full production crawler. It does not parse sitemaps, robots.txt, canonical tags, or JavaScript-rendered pages. The next step is to add agency-specific loaders for high-value sources like PR.gov, DTOP, Hacienda, Salud, Estado, DDEC, and the San Juan municipality.
+The crawler does not yet parse sitemaps, canonical tags, crawl-delay directives from robots.txt, or JavaScript-rendered pages. PDF and structured-document loaders are also future work.
